@@ -1731,6 +1731,7 @@ function generateInvoice(total, orderNo, customerDetails) {
   `;
   document.getElementById('invoiceOverlay').classList.add('open');
   history.pushState({ modal: 'invoice' }, '');
+}
 
 function closeInvoice() {
   document.getElementById('invoiceOverlay').classList.remove('open');
@@ -2178,6 +2179,7 @@ function openDetail(id) {
   document.getElementById('d_addBtn').textContent = inCart ? `🛒 In Cart (${inCart.qty})` : '🛒 Add to Cart';
   document.getElementById('detailOverlay').classList.add('open');
   history.pushState({ modal: 'detail' }, '');
+}
 
 function closeDetail(e) {
   if (e.target === document.getElementById('detailOverlay')) closeDetailBtn();

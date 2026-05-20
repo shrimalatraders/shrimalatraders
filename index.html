@@ -1043,11 +1043,17 @@ body.admin-mode .admin-edit { display: flex; }
 <div id="invoiceOverlay">
   <div id="invoiceFrame">
     <div class="invoice-actions">
-      <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Download PDF</button>
-      <button id="inv-wa-btn" class="inv-whatsapp" onclick="sendInvoiceWhatsApp()">📱 WhatsApp</button>
+      <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Download</button>
       <button id="inv-close-btn" class="inv-close-btn" onclick="closeInvoice()">✕ Close</button>
     </div>
     <div id="invoiceContent"></div>
+    <div style="padding:16px 28px 24px;">
+      <button onclick="sendInvoiceWhatsApp()" style="width:100%;padding:16px;background:#25D366;color:white;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.522 5.851L.057 23.882l6.174-1.438A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.213-3.667.854.87-3.573-.234-.372A9.818 9.818 0 0112 2.182c5.427 0 9.818 4.391 9.818 9.818 0 5.428-4.391 9.818-9.818 9.818z"/></svg>
+        📤 Send to My WhatsApp
+      </button>
+      <p style="text-align:center;font-size:12px;color:#888;margin-top:8px;">Click above to send this order to Shri Mala Traders WhatsApp</p>
+    </div>
   </div>
 </div>
 
@@ -1644,31 +1650,41 @@ async function confirmOrder() {
   closePayment();
   closeCart();
 
-  // Generate invoice
+  // Build WhatsApp message from cart (before clearing)
+  let waMsg = `🛒 *New Order – Shri Mala Traders* ✅%0A`;
+  waMsg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  waMsg += `🧾 *Order No:* #${orderNo}%0A`;
+  waMsg += `👤 *Name:* ${cdName}%0A`;
+  waMsg += `📞 *Phone:* ${cdPhone}${cdAltPhone ? ' / ' + cdAltPhone : ''}%0A`;
+  waMsg += `📍 *Address:* ${cdAddress}, ${cdPincode}%0A`;
+  waMsg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  waMsg += `*📦 Items:*%0A`;
+  cart.forEach(item => {
+    waMsg += `• ${item.name} × ${item.qty} = ₹${item.salePrice * item.qty}%0A`;
+  });
+  waMsg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  waMsg += `💰 *Grand Total: ₹${total}*%0A`;
+  waMsg += `💳 UPI: 9843048820-1@okbizaxis%0A`;
+  waMsg += `📸 Payment screenshot sent separately%0A`;
+  waMsg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  waMsg += `🙏 Thank you!`;
+
+  // Generate invoice (also triggers download inside)
   generateInvoice(total, orderNo, customerDetails);
 
-  // Send WhatsApp with order + payment note
-  let msg = `*New Order – Shri Mala Traders* ✅%0A`;
-  msg += `Order: #${orderNo}%0A`;
-  msg += `Customer: ${cdName} (${guestEmail})%0A`;
-  msg += `Phone: ${cdPhone}${cdAltPhone ? ' / ' + cdAltPhone : ''}%0A`;
-  msg += `Address: ${cdAddress}, ${cdPincode}%0A%0A*Items:*%0A`;
-  cart.forEach(item => {
-    msg += `• ${item.name} × ${item.qty} = ₹${item.salePrice * item.qty}%0A`;
-  });
-  msg += `%0A*Total: ₹${total}*%0A`;
-  msg += `%0A💳 Payment: 9843048820-1@okbizaxis%0A`;
-  msg += `📸 Screenshot attached separately`;
+  // Auto download invoice
+  setTimeout(() => { downloadInvoice(); }, 400);
 
+  // Open WhatsApp (after slight delay so invoice renders first)
   setTimeout(() => {
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-  }, 500);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`, '_blank');
+  }, 800);
 
   // Clear customer details form
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
 
   cart = []; saveCart(); updateCartCount(); updateCartUI();
-  showToast('✅ Order confirmed! Invoice ready.');
+  showToast('✅ Order confirmed! Invoice downloading...');
   screenshotDataUrl = null;
 }
 
@@ -1756,14 +1772,39 @@ function downloadInvoice() {
 }
 
 function sendInvoiceWhatsApp() {
-  const total = document.getElementById('paymentTotal').textContent || '';
   const orderNo = document.querySelector('#invoiceContent .inv-no strong')?.textContent || '';
-  let msg = `*Invoice – Shri Mala Traders*%0A`;
-  msg += `Order: ${orderNo}%0A`;
-  msg += `Customer: ${currentUser?.name || ''}%0A`;
-  msg += `Total: ₹${total}%0A`;
-  msg += `UPI: 9843048820-1@okbizaxis%0A`;
-  msg += `%0AThank you! 🙏`;
+
+  // Get items from invoice table rows
+  const rows = document.querySelectorAll('#invoiceContent .inv-table tbody tr');
+  let itemLines = '';
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 6) {
+      const name = cells[1].textContent.trim().replace(/\s+/g,' ');
+      const qty  = cells[3].textContent.trim();
+      const unit = cells[4].textContent.trim();
+      const tot  = cells[5].textContent.trim();
+      itemLines += `\u2022 ${name} � ${qty} @ ${unit} = ${tot}%0A`;
+    }
+  });
+
+  const totalBox = document.querySelector('#invoiceContent .inv-total-box');
+  const grandTotal = totalBox ? totalBox.textContent.replace('Grand Total:','').trim() : '';
+
+  const invCust = document.querySelector('#invoiceContent .inv-customer');
+  const custText = invCust ? invCust.innerText.replace(/\n/g,' | ') : '';
+
+  let msg = `🛒 *New Order – Shri Mala Traders*%0A`;
+  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  msg += `🧾 *Order No:* ${orderNo}%0A`;
+  msg += `👤 *Customer:* ${custText}%0A`;
+  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  msg += `*📦 Items:*%0A${itemLines}`;
+  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  msg += `💰 *${grandTotal}*%0A`;
+  msg += `💳 UPI: 9843048820-1@okbizaxis%0A`;
+  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
+  msg += `🙏 Thank you!`;
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
 }
 

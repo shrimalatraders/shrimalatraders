@@ -1124,7 +1124,7 @@ const LANG = {
     invGenerated: "இது computer-generated invoice.",
     screenshotReady: "✅ Screenshot ready! Confirm button active ஆனது.",
     upiCopied: "✅ UPI ID copied!",
-    orderConfirmed: "✅ Order confirm ஆனது! Invoice ready.",
+    orderConfirmed: "✅ உங்கள் ஆர்டர் பதிவானது! ்நிலையின் அடிப்படையில் டெலிவரி ச��ார்ஜ் பிறகு திட்டமாக வரும்.",
     printMsg: "🖨 Print / Save as PDF window திறக்கிறது...",
     addedToCart: "✓ கார்ட்டில் சேர்க்கப்பட்டது",
     login: "Login",
@@ -1179,7 +1179,7 @@ const LANG = {
     invGenerated: "This is a computer-generated invoice.",
     screenshotReady: "✅ Screenshot ready! Confirm button is now active.",
     upiCopied: "✅ UPI ID copied!",
-    orderConfirmed: "✅ Order confirmed! Invoice ready.",
+    orderConfirmed: "✅ Your order has been placed successfully! Based on your location, we will update the delivery charges. Once the delivery charges are paid, we will immediately dispatch your product.",
     printMsg: "🖨 Opening Print / Save as PDF window...",
     addedToCart: "✓ Added to cart",
     login: "Login",
@@ -1684,7 +1684,7 @@ async function confirmOrder() {
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
 
   cart = []; saveCart(); updateCartCount(); updateCartUI();
-  showToast('✅ Order confirmed! Invoice downloading...');
+  showToast('✅ Your order has been placed successfully! Based on your location, we will update the delivery charges. Once the delivery charges are paid, we will immediately dispatch your product.');
   screenshotDataUrl = null;
 }
 

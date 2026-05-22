@@ -1187,7 +1187,7 @@ body.admin-mode .admin-edit { display: flex; }
   </div>
   <div class="float-btn-wrap">
     <span class="float-tooltip">Google Reviews</span>
-    <a class="float-btn float-btn-review" href="https://www.google.com/maps?cid=13672336545443030126" target="_blank" title="Write a Review" id="googleReviewBtn">
+    <a class="float-btn float-btn-review" href="https://www.google.com/maps/place/Shri+Mala+Traders/@9.9204438,78.1144761,17z/data=!4m8!3m7!1s0x3b00c583f5669f71:0xbe7953d7247d6c6e!8m2!3d9.9204385!4d78.117051!9m1!1b1" target="_blank" title="Write a Review" id="googleReviewBtn">
       ⭐
     </a>
   </div>
@@ -1566,7 +1566,22 @@ function setCategory(btn) {
 // ─── PRODUCTS ────────────────────────────────────────
 function renderProducts() {
   const grid = document.getElementById('productGrid');
-  const search = document.getElementById('searchInput').value.toLowerCase();
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  // Show/hide search result label
+  let labelEl = document.getElementById('searchResultLabel');
+  if (!labelEl) {
+    labelEl = document.createElement('div');
+    labelEl.id = 'searchResultLabel';
+    labelEl.style.cssText = 'padding:8px 16px 4px;font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;';
+    grid.parentNode.insertBefore(labelEl, grid);
+  }
+  if (search) {
+    labelEl.innerHTML = `<span>🔍 Search results for "<b>${search}</b>"</span><button onclick="document.getElementById('searchInput').value='';renderProducts();" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;font-weight:600;">✕ Clear</button>`;
+    labelEl.style.display = 'flex';
+  } else {
+    labelEl.style.display = 'none';
+  }
 
   let filtered = allProducts.filter(p => {
     const matchCat = activeCategory === 'All' || p.category === activeCategory;
@@ -2090,18 +2105,17 @@ function toggleSearch() {
   if (wrap.classList.contains('expanded')) {
     input.focus();
   } else {
-    input.value = '';
-    renderProducts();
+    // Only clear if user explicitly closes search icon with empty or wants to reset
+    // Keep results visible; user can clear manually
   }
 }
 
-// Close search on outside click
+// Close search on outside click — keep results, just collapse the bar
 document.addEventListener('click', function(e) {
   const wrap = document.getElementById('searchWrap');
   if (wrap && wrap.classList.contains('expanded') && !wrap.contains(e.target)) {
     wrap.classList.remove('expanded');
-    document.getElementById('searchInput').value = '';
-    renderProducts();
+    // DO NOT clear search value — user wants to see the results
   }
   // Close login popup on outside click
   const popup = document.getElementById('loginPopup');
@@ -2447,7 +2461,7 @@ function openDetail(id) {
   const disc = p.mrp > p.salePrice ? Math.round((1 - p.salePrice / p.mrp) * 100) : 0;
   document.getElementById('d_discount').textContent = disc ? `${disc}% OFF` : '';
   document.getElementById('d_stock').textContent = p.stock ? `✓ ${p.stock}` : '';
-  // Update URL with product id for sharing
+  // Update URL with product id for sharing (only once)
   history.pushState({ modal: 'detail', productId: id }, '', '#product=' + id);
 
   // Parse description: "Key: Value" lines → specs table, plain lines → bullets
@@ -2492,7 +2506,6 @@ function openDetail(id) {
   const inCart = cart.find(c => c.id === id);
   document.getElementById('d_addBtn').textContent = inCart ? `🛒 In Cart (${inCart.qty})` : '🛒 Add to Cart';
   document.getElementById('detailOverlay').classList.add('open');
-  history.pushState({ modal: 'detail' }, '');
   // Show product suggestions
   showSuggestions(id);
 }

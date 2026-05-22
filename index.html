@@ -1024,6 +1024,9 @@ body.admin-mode .admin-edit { display: flex; }
         <button class="detail-add-btn" id="d_addBtn" onclick="detailAddToCart()">🛒 Add to Cart</button>
         <button class="detail-buy-btn" onclick="detailBuyNow()">⚡ Buy Now</button>
       </div>
+      <button onclick="shareProduct()" style="width:100%;margin-top:10px;padding:11px;background:#f0fdf4;border:1.5px solid #27ae60;border-radius:10px;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        🔗 Share This Product
+      </button>
     </div>
   </div>
 </div>
@@ -1184,7 +1187,7 @@ body.admin-mode .admin-edit { display: flex; }
   </div>
   <div class="float-btn-wrap">
     <span class="float-tooltip">Google Reviews</span>
-    <a class="float-btn float-btn-review" href="https://search.google.com/local/reviews?placeid=" target="_blank" title="Google Reviews" id="googleReviewBtn">
+    <a class="float-btn float-btn-review" href="https://www.google.com/maps?cid=13672336545443030126" target="_blank" title="Write a Review" id="googleReviewBtn">
       ⭐
     </a>
   </div>
@@ -1492,6 +1495,12 @@ window.onload = async () => {
     renderProducts();
     updateAuthUI();
     updateCartCount();
+    // Check if URL has a product hash (for shared links)
+    const hashMatch = window.location.hash.match(/#product=(\d+)/);
+    if (hashMatch) {
+      const pid = parseInt(hashMatch[1]);
+      setTimeout(() => openDetail(pid), 400);
+    }
   } catch (e) {
     console.error('JSON load failed:', e.message);
     // Fallback: show message so user knows what to do
@@ -2438,6 +2447,8 @@ function openDetail(id) {
   const disc = p.mrp > p.salePrice ? Math.round((1 - p.salePrice / p.mrp) * 100) : 0;
   document.getElementById('d_discount').textContent = disc ? `${disc}% OFF` : '';
   document.getElementById('d_stock').textContent = p.stock ? `✓ ${p.stock}` : '';
+  // Update URL with product id for sharing
+  history.pushState({ modal: 'detail', productId: id }, '', '#product=' + id);
 
   // Parse description: "Key: Value" lines → specs table, plain lines → bullets
   const raw = (p.description || '').trim();
@@ -2486,11 +2497,22 @@ function openDetail(id) {
   showSuggestions(id);
 }
 
+function shareProduct() {
+  const url = window.location.origin + window.location.pathname + '#product=' + detailProductId;
+  if (navigator.share) {
+    const p = allProducts.find(x => x.id === detailProductId);
+    navigator.share({ title: p ? p.name : 'Shri Mala Traders', text: p ? `${p.name} — ₹${p.salePrice}` : '', url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => showToast('🔗 Product link copied! Share it anywhere.'));
+  }
+}
+
 function closeDetail(e) {
   if (e.target === document.getElementById('detailOverlay')) closeDetailBtn();
 }
 function closeDetailBtn() {
   document.getElementById('detailOverlay').classList.remove('open');
+  history.pushState({}, '', window.location.pathname);
 }
 
 function detailAddToCart() {

@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shri Mala Traders – Madurai</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XGLP3BWD96"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XGLP3BWD96');
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1032,6 +1041,15 @@ body.admin-mode .admin-edit { display: flex; }
       </div>
     </div>
     
+    <!-- Transaction ID Duplicate Check -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:700;color:#1a1208;display:block;margin-bottom:6px;">UPI Transaction ID <span style="color:#c0392b;">*</span></label>
+      <input type="text" id="txn_id" placeholder="PhonePe / GPay Transaction ID"
+        style="width:100%;border:1.5px solid #dcc89a;border-radius:8px;padding:10px 12px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;transition:border 0.2s;" oninput="validateTxnId(this)">
+      <p id="txn-error" style="color:#c0392b;font-size:12px;margin-top:4px;display:none;">Duplicate Transaction ID! Already used.</p>
+      <p id="txn-ok" style="color:#27ae60;font-size:12px;margin-top:4px;display:none;">Transaction ID valid!</p>
+    </div>
+
     <button class="confirm-order-btn" id="confirmOrderBtn" disabled onclick="confirmOrder()">
       ✅ Confirm Order
     </button>
@@ -1124,7 +1142,7 @@ const LANG = {
     invGenerated: "இது computer-generated invoice.",
     screenshotReady: "✅ Screenshot ready! Confirm button active ஆனது.",
     upiCopied: "✅ UPI ID copied!",
-    orderConfirmed: "✅ உங்கள் ஆர்டர் பதிவானது! ்நிலையின் அடிப்படையில் டெலிவரி ச��ார்ஜ் பிறகு திட்டமாக வரும்.",
+    orderConfirmed: "✅ உங்கள் ஆர்டர் பதிவானது! ்நிலையின் அடிப்படையில் டெலிவரி ச��ார்ஜ் பிறகு திட்டமாக வரும்.",
     printMsg: "🖨 Print / Save as PDF window திறக்கிறது...",
     addedToCart: "✓ கார்ட்டில் சேர்க்கப்பட்டது",
     login: "Login",
@@ -1422,7 +1440,14 @@ function renderProducts() {
 
   let filtered = allProducts.filter(p => {
     const matchCat = activeCategory === 'All' || p.category === activeCategory;
-    const matchSearch = p.name.toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search);
+    // Product code from description: e.g. Code: SMT001
+    const _desc = (p.description || '').toLowerCase();
+    const _codeM = _desc.match(/(?:product\s*)?code\s*:\s*([\w\-]+)/i);
+    const _code = _codeM ? _codeM[1].toLowerCase() : '';
+    const matchSearch = p.name.toLowerCase().includes(search)
+      || (p.category||'').toLowerCase().includes(search)
+      || _code.includes(search)
+      || _desc.includes(search);
     return matchCat && matchSearch;
   });
 
@@ -1566,6 +1591,10 @@ async function processCheckout() {
   document.getElementById('screenshotPreview').style.display = 'none';
   document.getElementById('confirmOrderBtn').disabled = true;
   document.getElementById('screenshotInput').value = '';
+  var _txnR = document.getElementById('txn_id');
+  if (_txnR) { _txnR.value = ''; _txnR.style.borderColor = '#dcc89a'; }
+  var _ter = document.getElementById('txn-error'); if (_ter) _ter.style.display = 'none';
+  var _tor = document.getElementById('txn-ok'); if (_tor) _tor.style.display = 'none';
   history.pushState({ modal: 'payment' }, '');
 }
 
@@ -1580,6 +1609,32 @@ function copyUPI() {
 }
 
 let screenshotDataUrl = null;
+// TRANSACTION ID DUPLICATE GUARD
+function getUsedTxnIds() {
+  var orders = JSON.parse(localStorage.getItem('smt_orders') || '[]');
+  return orders.map(function(o){ return (o.txnId || '').trim().toLowerCase(); }).filter(Boolean);
+}
+
+function validateTxnId(input) {
+  var val = input.value.trim();
+  var errEl = document.getElementById('txn-error');
+  var okEl  = document.getElementById('txn-ok');
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+  if (!val) { input.style.borderColor = '#dcc89a'; return; }
+  var used = getUsedTxnIds();
+  if (used.indexOf(val.toLowerCase()) !== -1) {
+    input.style.borderColor = '#c0392b';
+    errEl.style.display = 'block';
+    document.getElementById('confirmOrderBtn').disabled = true;
+  } else {
+    input.style.borderColor = '#27ae60';
+    okEl.style.display = 'block';
+    if (screenshotDataUrl) document.getElementById('confirmOrderBtn').disabled = false;
+  }
+}
+
+
 
 function previewScreenshot(input) {
   if (!input.files[0]) return;
@@ -1596,6 +1651,17 @@ function previewScreenshot(input) {
 }
 
 async function confirmOrder() {
+  if (!screenshotDataUrl) return showToast('Please upload payment screenshot');
+
+  // TXN ID duplicate guard
+  var _txnId = document.getElementById('txn_id').value.trim();
+  if (!_txnId) return showToast('Please enter UPI Transaction ID');
+  var _usedTxns = getUsedTxnIds();
+  if (_usedTxns.indexOf(_txnId.toLowerCase()) !== -1) {
+    document.getElementById('txn-error').style.display = 'block';
+    return showToast('Duplicate Transaction ID! Already registered.');
+  }
+
   if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot');
 
   // Validate customer details
@@ -1619,7 +1685,8 @@ async function confirmOrder() {
   const guestEmail = currentUser ? currentUser.email : (document.getElementById('cd_email')?.value?.trim() || 'guest@order.com');
   const guestName = currentUser ? currentUser.name : cdName;
   orders.unshift({
-    orderNo, 
+    orderNo,
+    txnId: _txnId, 
     placedAt: new Date().toISOString(),
     userEmail: guestEmail,
     userName: guestName,
@@ -1670,7 +1737,7 @@ async function confirmOrder() {
   waMsg += `🙏 Thank you!`;
 
   // Generate invoice (also triggers download inside)
-  generateInvoice(total, orderNo, customerDetails);
+  generateInvoice(total, orderNo, customerDetails, screenshotDataUrl);
 
   // Auto download invoice
   setTimeout(() => { downloadInvoice(); }, 400);
@@ -1682,6 +1749,10 @@ async function confirmOrder() {
 
   // Clear customer details form
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  var _txnClear = document.getElementById('txn_id');
+  if (_txnClear) { _txnClear.value = ''; _txnClear.style.borderColor = '#dcc89a'; }
+  var _te = document.getElementById('txn-error'); if (_te) _te.style.display = 'none';
+  var _to = document.getElementById('txn-ok'); if (_to) _to.style.display = 'none';
 
   cart = []; saveCart(); updateCartCount(); updateCartUI();
   showToast('✅ Your order has been placed successfully! Based on your location, we will update the delivery charges. Once the delivery charges are paid, we will immediately dispatch your product.');
@@ -1689,7 +1760,8 @@ async function confirmOrder() {
 }
 
 // ─── INVOICE GENERATION ──────────────────────────────
-function generateInvoice(total, orderNo, customerDetails) {
+function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl) {
+  const shotUrl = paymentScreenshotUrl || screenshotDataUrl || null;
   orderNo = orderNo || ('SMT-' + Date.now().toString().slice(-6));
   const now = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
   const cd = customerDetails || {};
@@ -1740,6 +1812,20 @@ function generateInvoice(total, orderNo, customerDetails) {
       <div class="inv-total-box">Grand Total: ₹${total}</div>
     </div>
     <div class="inv-upi-note">💳 Payment via UPI: 9843048820-1@okbizaxis</div>
+    ${shotUrl ? `
+    <div style="margin-top:22px;border:2px solid #27ae60;border-radius:12px;overflow:hidden;">
+      <div style="background:#27ae60;color:white;padding:10px 16px;font-size:13px;font-weight:700;letter-spacing:0.5px;">
+        PAYMENT SCREENSHOT
+      </div>
+      <div style="padding:14px;background:#f0fdf4;text-align:center;">
+        <img src="${shotUrl}" alt="Payment Screenshot"
+          style="max-width:100%;max-height:400px;border-radius:8px;border:1.5px solid #27ae60;display:block;margin:0 auto;">
+        <p style="font-size:11px;color:#555;margin-top:8px;">Customer payment proof</p>
+      </div>
+    </div>` : `
+    <div style="margin-top:22px;border:2px dashed #dcc89a;border-radius:12px;padding:14px;text-align:center;background:#fdf8f0;">
+      <p style="font-size:13px;color:#8a7055;">No payment screenshot</p>
+    </div>`}
     <div class="inv-footer">
       Shri Mala Traders, Madurai | Thank you for your order! 🙏<br>
       This is a computer-generated invoice.
@@ -1784,7 +1870,7 @@ function sendInvoiceWhatsApp() {
       const qty  = cells[3].textContent.trim();
       const unit = cells[4].textContent.trim();
       const tot  = cells[5].textContent.trim();
-      itemLines += `\u2022 ${name} � ${qty} @ ${unit} = ${tot}%0A`;
+      itemLines += `\u2022 ${name} � ${qty} @ ${unit} = ${tot}%0A`;
     }
   });
 
@@ -2047,6 +2133,7 @@ function renderAdminOrders(list, orders) {
         </div>
         <div class="order-card-items">${itemsHTML}</div>
         <div class="order-card-total">💰 Total: ₹${order.total}</div>
+        ${order.txnId ? `<div style='font-size:12px;color:#27ae60;font-weight:600;margin-top:4px;'>TXN ID: ${order.txnId}</div>` : ''}
         ${order.paymentScreenshot ? `
           <details class="order-screenshot-wrap">
             <summary>📸 View Payment Screenshot</summary>
@@ -2063,7 +2150,7 @@ function viewOrderInvoice(order) {
   cart = order.items || [];
   const tempUser = currentUser;
   currentUser = { email: order.userEmail, name: order.userName };
-  generateInvoice(order.total, order.orderNo, order.customerDetails);
+  generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot);
   cart = tempCart;
   currentUser = tempUser;
 }

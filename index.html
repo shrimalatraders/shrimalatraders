@@ -959,6 +959,37 @@ body.admin-mode .admin-edit { display: flex; }
       <button class="admin-submit" onclick="addProduct()">+ Add Product</button>
     </div>
   </div>
+
+  <!-- BULK DESCRIPTION / MOQ EDITOR -->
+  <div style="margin-top:28px;border-top:2px solid #dcc89a;padding-top:20px;">
+    <h3 style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:6px;color:var(--dark);">📝 Quick Edit — Description & MOQ</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Product ஒன்னு select பண்ணி description / MOQ மாத்துங்க. Save பண்ணா GitHub JSON-ல் copy-paste பண்ண ready ஆகும்.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <select id="bulk_product_sel" style="flex:1;min-width:200px;border:1.5px solid #dcc89a;border-radius:8px;padding:9px 12px;font-size:14px;background:white;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;" onchange="loadBulkEdit()">
+        <option value="">-- Product தேர்வு செய்யுங்க --</option>
+      </select>
+      <button onclick="exportAllDescriptions()" style="background:var(--dark);color:var(--gold-light);border:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 All JSON Copy</button>
+    </div>
+    <div id="bulkEditArea" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">MOQ (Minimum Order Qty)</label>
+          <input type="number" id="bulk_moq" min="1" value="6" style="width:100%;border:1.5px solid #dcc89a;border-radius:8px;padding:8px 12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Product Name (readonly)</label>
+          <input type="text" id="bulk_name_display" readonly style="width:100%;border:1.5px solid #f0e8d8;border-radius:8px;padding:8px 12px;font-size:14px;font-family:'DM Sans',sans-serif;background:#fdf8f0;color:var(--muted);">
+        </div>
+      </div>
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Description (ஒவ்வொரு line-உம் "Key: Value" format-ல் போடுங்க)</label>
+      <textarea id="bulk_desc" rows="8" style="width:100%;border:1.5px solid #dcc89a;border-radius:8px;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;line-height:1.6;" placeholder="Product Code: 850055&#10;Material: Premium Melamine&#10;Shape: Rectangular&#10;MOQ: 6&#10;&#10;* Durable &amp; long lasting&#10;* Easy to clean"></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+        <button onclick="saveBulkEdit()" style="background:var(--gold);color:var(--dark);border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">💾 Save & Next</button>
+        <button onclick="copyProductJson()" style="background:var(--dark);color:var(--gold-light);border:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 This Product JSON</button>
+        <span id="bulkSaveStatus" style="font-size:13px;color:var(--green);align-self:center;font-weight:600;"></span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Product Section -->
@@ -1126,14 +1157,7 @@ body.admin-mode .admin-edit { display: flex; }
       </div>
     </div>
     
-    <!-- Transaction ID Duplicate Check -->
-    <div style="margin-bottom:14px;">
-      <label style="font-size:13px;font-weight:700;color:#1a1208;display:block;margin-bottom:6px;">UPI Transaction ID <span style="color:#c0392b;">*</span></label>
-      <input type="text" id="txn_id" placeholder="PhonePe / GPay Transaction ID"
-        style="width:100%;border:1.5px solid #dcc89a;border-radius:8px;padding:10px 12px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;transition:border 0.2s;" oninput="validateTxnId(this)">
-      <p id="txn-error" style="color:#c0392b;font-size:12px;margin-top:4px;display:none;">Duplicate Transaction ID! Already used.</p>
-      <p id="txn-ok" style="color:#27ae60;font-size:12px;margin-top:4px;display:none;">Transaction ID valid!</p>
-    </div>
+
 
     <button class="confirm-order-btn" id="confirmOrderBtn" disabled onclick="confirmOrder()">
       ✅ Confirm Order
@@ -1187,7 +1211,7 @@ body.admin-mode .admin-edit { display: flex; }
   </div>
   <div class="float-btn-wrap">
     <span class="float-tooltip">Google Reviews</span>
-    <a class="float-btn float-btn-review" href="https://www.google.com/maps/place/Shri+Mala+Traders/@9.9204438,78.1144761,17z/data=!4m8!3m7!1s0x3b00c583f5669f71:0xbe7953d7247d6c6e!8m2!3d9.9204385!4d78.117051!9m1!1b1" target="_blank" title="Write a Review" id="googleReviewBtn">
+    <a class="float-btn float-btn-review" href="https://search.google.com/local/writereview?placeid=0x3b00c583f5669f71:0xbe7953d7247d6c6e" target="_blank" title="Write a Review" id="googleReviewBtn">
       ⭐
     </a>
   </div>
@@ -1493,6 +1517,7 @@ window.onload = async () => {
     if (localOverrides && localOverrides.length) allProducts = localOverrides;
     setupCategories();
     renderProducts();
+    populateBulkSelect();
     updateAuthUI();
     updateCartCount();
     // Check if URL has a product hash (for shared links)
@@ -1716,7 +1741,25 @@ function removeFromCart(id) {
 
 function cartKey() { return currentUser ? 'smt_cart_' + currentUser.email : 'smt_cart_guest'; }
 function saveCart() { localStorage.setItem(cartKey(), JSON.stringify(cart)); }
-function loadCart() { cart = JSON.parse(localStorage.getItem(cartKey()) || '[]'); }
+function loadCart() {
+  // If logged in, use user cart. If guest cart has items and user just logged in, merge once then clear guest.
+  const key = cartKey();
+  const stored = JSON.parse(localStorage.getItem(key) || '[]');
+  if (currentUser) {
+    const guestCart = JSON.parse(localStorage.getItem('smt_cart_guest') || '[]');
+    if (guestCart.length > 0) {
+      // Merge guest items into user cart (avoid duplicates)
+      guestCart.forEach(gItem => {
+        const existing = stored.find(i => i.id === gItem.id);
+        if (existing) existing.qty += gItem.qty;
+        else stored.push(gItem);
+      });
+      localStorage.removeItem('smt_cart_guest'); // clear guest cart after merge
+      localStorage.setItem(key, JSON.stringify(stored));
+    }
+  }
+  cart = stored;
+}
 function updateCartCount() {
   const total = cart.reduce((s, i) => s + i.qty, 0);
   document.getElementById('cartCount').textContent = total;
@@ -1790,10 +1833,6 @@ async function processCheckout() {
   document.getElementById('screenshotPreview').style.display = 'none';
   document.getElementById('confirmOrderBtn').disabled = true;
   document.getElementById('screenshotInput').value = '';
-  var _txnR = document.getElementById('txn_id');
-  if (_txnR) { _txnR.value = ''; _txnR.style.borderColor = '#dcc89a'; }
-  var _ter = document.getElementById('txn-error'); if (_ter) _ter.style.display = 'none';
-  var _tor = document.getElementById('txn-ok'); if (_tor) _tor.style.display = 'none';
   history.pushState({ modal: 'payment' }, '');
 }
 
@@ -1808,30 +1847,6 @@ function copyUPI() {
 }
 
 let screenshotDataUrl = null;
-// TRANSACTION ID DUPLICATE GUARD
-function getUsedTxnIds() {
-  var orders = JSON.parse(localStorage.getItem('smt_orders') || '[]');
-  return orders.map(function(o){ return (o.txnId || '').trim().toLowerCase(); }).filter(Boolean);
-}
-
-function validateTxnId(input) {
-  var val = input.value.trim();
-  var errEl = document.getElementById('txn-error');
-  var okEl  = document.getElementById('txn-ok');
-  errEl.style.display = 'none';
-  okEl.style.display  = 'none';
-  if (!val) { input.style.borderColor = '#dcc89a'; return; }
-  var used = getUsedTxnIds();
-  if (used.indexOf(val.toLowerCase()) !== -1) {
-    input.style.borderColor = '#c0392b';
-    errEl.style.display = 'block';
-    document.getElementById('confirmOrderBtn').disabled = true;
-  } else {
-    input.style.borderColor = '#27ae60';
-    okEl.style.display = 'block';
-    if (screenshotDataUrl) document.getElementById('confirmOrderBtn').disabled = false;
-  }
-}
 
 
 
@@ -1850,17 +1865,6 @@ function previewScreenshot(input) {
 }
 
 async function confirmOrder() {
-  if (!screenshotDataUrl) return showToast('Please upload payment screenshot');
-
-  // TXN ID duplicate guard
-  var _txnId = document.getElementById('txn_id').value.trim();
-  if (!_txnId) return showToast('Please enter UPI Transaction ID');
-  var _usedTxns = getUsedTxnIds();
-  if (_usedTxns.indexOf(_txnId.toLowerCase()) !== -1) {
-    document.getElementById('txn-error').style.display = 'block';
-    return showToast('Duplicate Transaction ID! Already registered.');
-  }
-
   if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot');
 
   // Validate customer details
@@ -1885,7 +1889,6 @@ async function confirmOrder() {
   const guestName = currentUser ? currentUser.name : cdName;
   orders.unshift({
     orderNo,
-    txnId: _txnId, 
     placedAt: new Date().toISOString(),
     userEmail: guestEmail,
     userName: guestName,
@@ -1948,10 +1951,6 @@ async function confirmOrder() {
 
   // Clear customer details form
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-  var _txnClear = document.getElementById('txn_id');
-  if (_txnClear) { _txnClear.value = ''; _txnClear.style.borderColor = '#dcc89a'; }
-  var _te = document.getElementById('txn-error'); if (_te) _te.style.display = 'none';
-  var _to = document.getElementById('txn-ok'); if (_to) _to.style.display = 'none';
 
   cart = []; saveCart(); updateCartCount(); updateCartUI();
   showToast('✅ Your order has been placed successfully! Based on your location, we will update the delivery charges. Once the delivery charges are paid, we will immediately dispatch your product.');
@@ -2645,6 +2644,100 @@ function closeCrop() {
 // ─── LOCAL PRODUCT OVERRIDES (Admin edits in static site) ──
 function saveProductsLocally() {
   localStorage.setItem('smt_product_overrides', JSON.stringify(allProducts));
+}
+
+// ─── BULK DESCRIPTION / MOQ EDITOR ───────────────────────
+function populateBulkSelect() {
+  const sel = document.getElementById('bulk_product_sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Product தேர்வு செய்யுங்க --</option>';
+  allProducts.forEach(p => {
+    sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+  });
+}
+
+function loadBulkEdit() {
+  const id = parseInt(document.getElementById('bulk_product_sel').value);
+  const area = document.getElementById('bulkEditArea');
+  if (!id) { area.style.display = 'none'; return; }
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  area.style.display = 'block';
+  document.getElementById('bulk_name_display').value = p.name;
+  document.getElementById('bulk_desc').value = p.description || '';
+  // Parse existing MOQ from description
+  const moqMatch = (p.description || '').match(/moq\s*:\s*(\d+)/i);
+  document.getElementById('bulk_moq').value = moqMatch ? moqMatch[1] : '6';
+  document.getElementById('bulkSaveStatus').textContent = '';
+}
+
+function saveBulkEdit() {
+  const id = parseInt(document.getElementById('bulk_product_sel').value);
+  if (!id) return;
+  const idx = allProducts.findIndex(p => p.id === id);
+  if (idx === -1) return;
+  let desc = document.getElementById('bulk_desc').value.trim();
+  const moq = parseInt(document.getElementById('bulk_moq').value) || 6;
+  // Inject/update MOQ in description
+  if (/moq\s*:/i.test(desc)) {
+    desc = desc.replace(/moq\s*:\s*\d+/i, `MOQ: ${moq}`);
+  } else {
+    // Add MOQ after first line
+    const lines = desc.split('\n');
+    const insertAt = lines.findIndex(l => l.trim() === '') || 1;
+    lines.splice(insertAt > 0 ? insertAt : 1, 0, `MOQ: ${moq}`);
+    desc = lines.join('\n');
+  }
+  allProducts[idx].description = desc;
+  saveProductsLocally();
+  renderProducts();
+  document.getElementById('bulkSaveStatus').textContent = '✅ Saved!';
+  setTimeout(() => {
+    // Auto-advance to next product
+    const sel = document.getElementById('bulk_product_sel');
+    const opts = Array.from(sel.options);
+    const curIdx = opts.findIndex(o => o.value == id);
+    if (curIdx < opts.length - 1) {
+      sel.selectedIndex = curIdx + 1;
+      loadBulkEdit();
+      document.getElementById('bulkSaveStatus').textContent = '✅ Saved! Next product loaded.';
+    }
+  }, 800);
+}
+
+function copyProductJson() {
+  const id = parseInt(document.getElementById('bulk_product_sel').value);
+  if (!id) return;
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  // Copy just this product as JSON (without image data to keep it small)
+  const copy = { ...p };
+  if (copy.image && copy.image.startsWith('data:')) copy.image = '[base64-image]';
+  navigator.clipboard.writeText(JSON.stringify(copy, null, 2)).then(() => {
+    document.getElementById('bulkSaveStatus').textContent = '📋 Copied!';
+  });
+}
+
+function exportAllDescriptions() {
+  // Export full JSON (descriptions + MOQ updated) — paste into GitHub shri_mala_db.json
+  const data = JSON.parse(localStorage.getItem('smt_orders') ? '{}' : '{}');
+  // Get current full DB structure
+  const fullData = {
+    products: allProducts.map(p => {
+      const copy = { ...p };
+      // Keep base64 images as-is
+      return copy;
+    })
+  };
+  const jsonStr = JSON.stringify(fullData, null, 2);
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    showToast('📋 Full JSON copied! GitHub-ல் shri_mala_db.json-ல் paste பண்ணுங்க.');
+  }).catch(() => {
+    // Fallback: open in new window
+    const win = window.open('', '_blank');
+    win.document.write('<pre style="font-size:12px;padding:20px;">' + jsonStr.replace(/</g,'&lt;') + '</pre>');
+    showToast('New window-ல் JSON திறந்தது — copy பண்ணுங்க.');
+  });
 }
 // ─── TOAST ────────────────────────────────────────────
 let toastTimer;

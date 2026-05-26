@@ -1210,11 +1210,55 @@ body.admin-mode .admin-edit { display: flex; }
     </a>
   </div>
   <div class="float-btn-wrap">
-    <span class="float-tooltip">Google Reviews</span>
-    <a class="float-btn float-btn-review" href="https://search.google.com/local/writereview?placeid=0x3b00c583f5669f71:0xbe7953d7247d6c6e" target="_blank" title="Write a Review" id="googleReviewBtn">
+    <span class="float-tooltip">Customer Reviews</span>
+    <button class="float-btn float-btn-review" onclick="openReviewsPanel()" title="Customer Reviews" id="reviewsPanelBtn">
       ⭐
-    </a>
+    </button>
   </div>
+</div>
+
+<!-- Reviews Slide Panel -->
+<div id="reviewsOverlay" onclick="closeReviewsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:700;"></div>
+<div id="reviewsPanel" style="
+  position:fixed;right:0;top:0;height:100vh;width:420px;max-width:100vw;
+  background:var(--white);z-index:701;
+  transform:translateX(100%);transition:transform 0.33s ease;
+  display:flex;flex-direction:column;box-shadow:-6px 0 32px rgba(0,0,0,0.18);
+">
+  <!-- Panel Header -->
+  <div style="background:var(--dark);padding:18px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--gold);flex-shrink:0;">
+    <div>
+      <div style="font-family:'Playfair Display',serif;color:var(--gold-light);font-size:18px;font-weight:700;">Customer Reviews</div>
+      <div style="color:var(--muted);font-size:11px;letter-spacing:2px;margin-top:2px;">TRUSTED BY 1000+ CUSTOMERS</div>
+    </div>
+    <button onclick="closeReviewsPanel()" style="background:none;border:none;color:var(--gold-light);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+  </div>
+
+  <!-- Write a Review CTA -->
+  <div style="background:linear-gradient(135deg,#1a1208,#2c1f0a);padding:14px 20px;border-bottom:1px solid rgba(200,150,42,0.2);flex-shrink:0;">
+    <a href="https://search.google.com/local/writereview?placeid=0x3b00c583f5669f71:0xbe7953d7247d6c6e" target="_blank"
+       style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--gold);color:var(--dark);padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;font-family:'DM Sans',sans-serif;transition:background 0.2s;"
+       onmouseover="this.style.background='#e8b84b'" onmouseout="this.style.background='var(--gold)'">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      ✍ Write a Review on Google
+    </a>
+    <div style="display:flex;gap:4px;justify-content:center;margin-top:10px;">
+      <span style="color:#fbbf24;font-size:18px;">★★★★★</span>
+      <span style="color:rgba(255,255,255,0.5);font-size:12px;align-self:center;margin-left:6px;">4.9 · 1000+ Reviews</span>
+    </div>
+  </div>
+
+  <!-- Category Filter Tabs -->
+  <div style="padding:12px 16px 8px;border-bottom:1px solid #f0e8d8;flex-shrink:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;" id="reviewCatBar">
+    <button class="rev-cat-btn active" data-cat="All" onclick="filterReviews('All',this)" style="background:var(--gold);border:1.5px solid var(--gold);color:var(--dark);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;margin-right:6px;font-family:'DM Sans',sans-serif;transition:all 0.2s;">All</button>
+    <button class="rev-cat-btn" data-cat="Crockery" onclick="filterReviews('Crockery',this)" style="background:white;border:1.5px solid #dcc89a;color:var(--text);padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;margin-right:6px;font-family:'DM Sans',sans-serif;transition:all 0.2s;">🍽 Crockery</button>
+    <button class="rev-cat-btn" data-cat="Return Gifts" onclick="filterReviews('Return Gifts',this)" style="background:white;border:1.5px solid #dcc89a;color:var(--text);padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;margin-right:6px;font-family:'DM Sans',sans-serif;transition:all 0.2s;">🎁 Return Gifts</button>
+    <button class="rev-cat-btn" data-cat="Silver Items" onclick="filterReviews('Silver Items',this)" style="background:white;border:1.5px solid #dcc89a;color:var(--text);padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;margin-right:6px;font-family:'DM Sans',sans-serif;transition:all 0.2s;">🥈 Silver Items</button>
+    <button class="rev-cat-btn" data-cat="Wholesale" onclick="filterReviews('Wholesale',this)" style="background:white;border:1.5px solid #dcc89a;color:var(--text);padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;margin-right:6px;font-family:'DM Sans',sans-serif;transition:all 0.2s;">📦 Wholesale</button>
+  </div>
+
+  <!-- Reviews List -->
+  <div id="reviewsList" style="flex:1;overflow-y:auto;padding:12px 16px;"></div>
 </div>
 
 <!-- Product Suggestions (shown after viewing a product) -->
@@ -2750,6 +2794,115 @@ function showToast(msg) {
 
 // Restore user session
 if (currentUser) updateAuthUI();
+
+// ─── REVIEWS PANEL ─────────────────────────────────────
+const REVIEWS_DATA = [
+  { id:1, name:"Praveen Kumar", category:"Crockery", rating:5, date:"2025-05-10", tag:"Verified Buyer", text:"Shrimala Traders-ல் Madurai-ல் best wholesale crockery collections இருக்கு. Quality excellent, rates மிகவும் affordable. Bulk purchase-க்கு strongly recommended!" },
+  { id:2, name:"Meena Lakshmi", category:"Return Gifts", rating:5, date:"2025-05-08", tag:"Wedding Function", text:"Wedding function-க்கு return gift items order பண்ணோம். Packaging, finishing, delivery — அனைத்தும் perfect! Customers loved the products." },
+  { id:3, name:"Rakesh Jain", category:"Wholesale", rating:5, date:"2025-04-28", tag:"Retailer", text:"Very low MOQ and genuine wholesale pricing. Retailers and event orders-க்கு best place. Customer support also very friendly!" },
+  { id:4, name:"Sathish Kumar", category:"Silver Items", rating:5, date:"2025-04-20", tag:"Verified Buyer", text:"Premium quality products with latest designs. Silver trays and serving collections are always trending in our store. Highly recommend!" },
+  { id:5, name:"Aarthi Collections", category:"Return Gifts", rating:5, date:"2025-04-15", tag:"Regular Customer", text:"Excellent service and fast response. We regularly purchase return gift items from Shrimala Traders for our shop. Very professional!" },
+  { id:6, name:"Vignesh Raj", category:"Crockery", rating:5, date:"2025-04-10", tag:"Verified Buyer", text:"Products look exactly like premium showroom quality. Rates are budget friendly even for bulk quantities. Worth every rupee!" },
+  { id:7, name:"Priya Events", category:"Return Gifts", rating:5, date:"2025-03-30", tag:"Event Planner", text:"Best supplier for wedding return gifts and fancy crockery items. Delivery was on time and products arrived safely." },
+  { id:8, name:"Harish Traders", category:"Wholesale", rating:5, date:"2025-03-22", tag:"Retailer", text:"Large variety of designs available. Easy ordering process and very professional wholesale service. Will order again!" },
+  { id:9, name:"Kavitha Home Needs", category:"Crockery", rating:5, date:"2025-03-15", tag:"Regular Customer", text:"We have been purchasing from Shrimala Traders for many months. Quality consistency and pricing are the biggest advantages." },
+  { id:10, name:"Dinesh Kumar", category:"Silver Items", rating:5, date:"2025-03-08", tag:"Verified Buyer", text:"Highly recommended for wholesale crockery and gifting items. Premium collections with reliable customer support. 5 stars!" },
+];
+
+let activeReviewCat = 'All';
+
+function openReviewsPanel() {
+  document.getElementById('reviewsPanel').style.transform = 'translateX(0)';
+  document.getElementById('reviewsOverlay').style.display = 'block';
+  renderReviews(activeReviewCat);
+}
+
+function closeReviewsPanel() {
+  document.getElementById('reviewsPanel').style.transform = 'translateX(100%)';
+  document.getElementById('reviewsOverlay').style.display = 'none';
+}
+
+function filterReviews(cat, btn) {
+  activeReviewCat = cat;
+  // Update button styles
+  document.querySelectorAll('.rev-cat-btn').forEach(b => {
+    b.style.background = 'white';
+    b.style.borderColor = '#dcc89a';
+    b.style.color = 'var(--text)';
+    b.style.fontWeight = '400';
+  });
+  btn.style.background = 'var(--gold)';
+  btn.style.borderColor = 'var(--gold)';
+  btn.style.color = 'var(--dark)';
+  btn.style.fontWeight = '700';
+  renderReviews(cat);
+}
+
+function renderReviews(cat) {
+  const list = document.getElementById('reviewsList');
+  const filtered = cat === 'All' ? REVIEWS_DATA : REVIEWS_DATA.filter(r => r.category === cat);
+  // Sort by date desc (latest first)
+  filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:36px;margin-bottom:10px;">🔍</div>
+      <div style="font-size:14px;">No reviews in this category yet.</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const initials = r.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    const dateObj = new Date(r.date);
+    const dateStr = dateObj.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    return `
+    <div onclick="scrollToCategory('${r.category}')" style="
+      background:white;border-radius:12px;padding:14px 16px;margin-bottom:12px;
+      border:1px solid rgba(220,200,154,0.4);box-shadow:0 2px 8px rgba(0,0,0,0.06);
+      cursor:pointer;transition:box-shadow 0.2s,transform 0.2s;
+    " onmouseover="this.style.boxShadow='0 6px 20px rgba(200,150,42,0.15)';this.style.transform='translateY(-2px)'"
+       onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)';this.style.transform='translateY(0)'">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--dark);font-size:14px;flex-shrink:0;">${initials}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;color:var(--dark);">${r.name}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;">
+            <span style="color:#f59e0b;font-size:13px;">${stars}</span>
+            <span style="font-size:10px;background:#fdf3e0;color:var(--gold);border:1px solid #f0c040;padding:1px 7px;border-radius:10px;font-weight:700;">${r.tag}</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);white-space:nowrap;">${dateStr}</div>
+      </div>
+      <p style="font-size:13px;color:var(--text);line-height:1.6;margin:0 0 8px;">"${r.text}"</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:10px;background:#f0f8ff;color:#3b82f6;border:1px solid #bfdbfe;padding:2px 8px;border-radius:10px;font-weight:600;">🔍 View ${r.category} Products →</span>
+        <span style="font-size:10px;color:var(--muted);">📌 ${r.category}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function scrollToCategory(cat) {
+  closeReviewsPanel();
+  // Find and click the matching category button
+  const catBtns = document.querySelectorAll('#catFilter .cat-btn');
+  let matched = false;
+  catBtns.forEach(btn => {
+    if (btn.dataset.cat && (btn.dataset.cat.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(btn.dataset.cat.toLowerCase()))) {
+      btn.click();
+      matched = true;
+    }
+  });
+  if (!matched) {
+    // Scroll to product grid anyway
+    document.getElementById('productGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    setTimeout(() => document.getElementById('productGrid').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+  showToast('🔍 Showing ' + cat + ' products');
+}
 </script>
 </body>
 </html>

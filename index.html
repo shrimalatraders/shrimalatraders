@@ -70,6 +70,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   color: var(--white); padding: 8px 12px; border-radius: 7px; font-size: 13px;
   outline: none; font-family: 'DM Sans', sans-serif; width: 100%;
 }
+#loginPopup input[type="password"] {
+  color: var(--white);
+  letter-spacing: 2px;
+}
 #loginPopup input::placeholder { color: rgba(255,255,255,0.35); }
 #loginPopup input:focus { border-color: var(--gold); }
 #loginPopup .popup-login-btn {
@@ -719,6 +723,40 @@ body.admin-mode .admin-edit { display: flex; }
 .inv-footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 20px; border-top: 1px solid #eee; padding-top: 14px; }
 .inv-upi-note { background: #f0fdf4; border: 1.5px solid var(--green); border-radius: 8px; padding: 10px 16px; margin: 16px 0; text-align: center; font-size: 13px; color: var(--green); font-weight: 700; }
 
+/* ── INVOICE ORDER CONFIRM ALERT ── */
+#invoiceConfirmAlert {
+  display: none;
+  background: linear-gradient(135deg, #1a4731, #27ae60);
+  border-radius: 12px 12px 0 0;
+  padding: 18px 20px;
+  text-align: center;
+  border-bottom: 3px solid #f0c040;
+}
+#invoiceConfirmAlert.show { display: block; }
+#invoiceConfirmAlert .alert-title {
+  font-size: 16px; font-weight: 800; color: #fff;
+  margin-bottom: 6px; letter-spacing: 0.5px;
+}
+#invoiceConfirmAlert .alert-sub {
+  font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.6;
+}
+#invoiceConfirmAlert .alert-arrow {
+  font-size: 22px; margin: 8px 0 4px; display: block; animation: bounce-down 1s infinite;
+}
+@keyframes bounce-down {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+.inv-whatsapp-confirm {
+  width: 100%; padding: 15px; background: #25D366; color: white; border: none;
+  border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: background 0.2s;
+  letter-spacing: 0.5px; margin-bottom: 6px; display: flex;
+  align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 4px 16px rgba(37,211,102,0.35);
+}
+.inv-whatsapp-confirm:hover { background: #1da851; }
+
 /* ── CUSTOMER DETAILS FORM ── */
 .cust-details-section { margin-bottom: 16px; }
 .cust-details-section h4 { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 10px; border-bottom: 1.5px solid #dcc89a; padding-bottom: 6px; }
@@ -886,8 +924,10 @@ body.admin-mode .admin-edit { display: flex; }
     </div>
     <!-- Login popup -->
     <div id="loginPopup">
+      <div class="popup-title">🔐 SIGN IN</div>
       <input type="email" id="emailInput" placeholder="Email">
       <input type="text" id="nameInput" placeholder="Name">
+      <input type="password" id="passwordInput" placeholder="Password (Admin only)">
       <button class="popup-login-btn" onclick="handleLogin()">Login</button>
     </div>
   </div>
@@ -1169,17 +1209,28 @@ body.admin-mode .admin-edit { display: flex; }
 <!-- Invoice Preview Overlay -->
 <div id="invoiceOverlay">
   <div id="invoiceFrame">
+    <!-- ORDER CONFIRM ALERT BANNER -->
+    <div id="invoiceConfirmAlert">
+      <div class="alert-title">⚠️ IMPORTANT — Your Order is NOT Confirmed Yet!</div>
+      <div class="alert-sub">
+        Your invoice is ready. To <strong>confirm your order</strong>, you must:<br>
+        1️⃣ Download this invoice &nbsp;|&nbsp; 2️⃣ Click the WhatsApp button below
+      </div>
+      <span class="alert-arrow">👇</span>
+    </div>
     <div class="invoice-actions">
-      <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Download</button>
+      <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Download Invoice</button>
       <button id="inv-close-btn" class="inv-close-btn" onclick="closeInvoice()">✕ Close</button>
     </div>
     <div id="invoiceContent"></div>
-    <div style="padding:16px 28px 24px;">
-      <button onclick="sendInvoiceWhatsApp()" style="width:100%;padding:16px;background:#25D366;color:white;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+    <div style="padding:16px 28px 24px; background:#f9fdf5; border-top: 3px solid #25D366;">
+      <button class="inv-whatsapp-confirm" onclick="sendInvoiceWhatsApp()">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.522 5.851L.057 23.882l6.174-1.438A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.213-3.667.854.87-3.573-.234-.372A9.818 9.818 0 0112 2.182c5.427 0 9.818 4.391 9.818 9.818 0 5.428-4.391 9.818-9.818 9.818z"/></svg>
-        📤 Send to My WhatsApp
+        📲 Click Here to Confirm Order via WhatsApp
       </button>
-      <p style="text-align:center;font-size:12px;color:#888;margin-top:8px;">Click above to send this order to Shri Mala Traders WhatsApp</p>
+      <p style="text-align:center;font-size:12px;color:#27ae60;margin-top:8px;font-weight:600;">
+        ✅ Your order will be confirmed only after sending this to WhatsApp
+      </p>
     </div>
   </div>
 </div>
@@ -2028,16 +2079,16 @@ async function confirmOrder() {
   waMsg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
   waMsg += `🙏 Thank you!`;
 
-  // Generate invoice (also triggers download inside)
+  // Generate invoice and show overlay with confirmation alert
   generateInvoice(total, orderNo, customerDetails, screenshotDataUrl);
 
-  // Auto download invoice
+  // Show the order-confirm alert banner inside the invoice overlay
+  document.getElementById('invoiceConfirmAlert').classList.add('show');
+
+  // Auto download invoice after short delay
   setTimeout(() => { downloadInvoice(); }, 400);
 
-  // Open WhatsApp (after slight delay so invoice renders first)
-  setTimeout(() => {
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`, '_blank');
-  }, 800);
+  // DO NOT auto-open WhatsApp — customer must click the button in invoice overlay
 
   // Clear customer details form
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
@@ -2125,6 +2176,7 @@ function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl) 
 
 function closeInvoice() {
   document.getElementById('invoiceOverlay').classList.remove('open');
+  document.getElementById('invoiceConfirmAlert').classList.remove('show');
 }
 
 function downloadInvoice() {
@@ -2218,11 +2270,18 @@ document.addEventListener('click', function(e) {
 async function handleLogin() {
   const email = document.getElementById('emailInput').value.trim();
   const name = document.getElementById('nameInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
   if (!email) return showToast('⚠ Please enter your email');
   if (!name) return showToast('⚠ Please enter your name');
   // Static site login — no server needed
   const ADMIN_EMAIL = 'admin@shrimalatraders.com';
-  currentUser = { email, name, isAdmin: email.toLowerCase() === ADMIN_EMAIL };
+  const ADMIN_PASSWORD = 'Shrimala@2025'; // Change this to your preferred password
+  const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL;
+  if (isAdminEmail) {
+    if (!password) return showToast('⚠ Admin-க்கு password கொடுங்கள்');
+    if (password !== ADMIN_PASSWORD) return showToast('❌ Wrong admin password!');
+  }
+  currentUser = { email, name, isAdmin: isAdminEmail };
   localStorage.setItem('smt_user', JSON.stringify(currentUser));
   loadCart();
   updateAuthUI();
@@ -2230,6 +2289,7 @@ async function handleLogin() {
   updateCartCount();
   showToast(`Welcome, ${currentUser.name}! 🎉`);
   document.getElementById('loginPopup').classList.remove('open');
+  document.getElementById('passwordInput').value = '';
 }
 
 function handleLogout() {

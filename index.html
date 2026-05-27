@@ -682,8 +682,8 @@ body.admin-mode .admin-edit { display: flex; }
   cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
   margin-bottom: 8px;
 }
-.confirm-order-btn:disabled { background: #b0b0b0; cursor: not-allowed; }
-.confirm-order-btn:not(:disabled):hover { background: #1e8449; }
+.confirm-order-btn.btn-locked { background: #b0b0b0 !important; cursor: not-allowed; pointer-events: none; opacity: 0.6; }
+.confirm-order-btn:not(.btn-locked):hover { background: #1e8449; }
 .payment-cancel-btn {
   width: 100%; background: transparent; border: 1.5px solid #dcc89a; color: var(--muted);
   padding: 11px; border-radius: 10px; font-size: 14px; cursor: pointer;
@@ -1220,7 +1220,7 @@ body.admin-mode .admin-edit { display: flex; }
     
 
 
-    <button class="confirm-order-btn" id="confirmOrderBtn" disabled onclick="confirmOrder()">
+    <button class="confirm-order-btn btn-locked" id="confirmOrderBtn" onclick="confirmOrder()">
       ✅ Confirm Order
     </button>
     <button class="payment-cancel-btn" id="pm-cancel-btn" onclick="closePayment()">Cancel</button>
@@ -2002,12 +2002,12 @@ function updateCartUI() {
     bar.style.display = 'block';
     bar.className = 'min-order-bar';
     bar.textContent = t('minOrder') + MIN_ORDER + '. ' + t('minOrderAdd') + (MIN_ORDER - total) + t('minOrderAdd2');
-    btn.disabled = true;
+    btn.classList.add('btn-locked');
   } else {
     bar.style.display = 'block';
     bar.className = 'min-order-bar ok';
     bar.textContent = t('minOrderOk');
-    btn.disabled = false;
+    btn.classList.remove('btn-locked');
   }
 }
 
@@ -2039,7 +2039,7 @@ async function processCheckout() {
     const preview = document.getElementById('screenshotPreview');
     preview.src = screenshotDataUrl;
     preview.style.display = 'block';
-    btn.removeAttribute('disabled');
+    btn.classList.remove('btn-locked');
     btn.style.background = 'var(--green)';
     btn.style.opacity = '1';
     btn.style.pointerEvents = 'auto';
@@ -2050,7 +2050,7 @@ async function processCheckout() {
   } else {
     // Fresh — reset everything
     document.getElementById('screenshotPreview').style.display = 'none';
-    btn.setAttribute('disabled', 'true');
+    btn.classList.add('btn-locked');
     btn.style.background = '';
     btn.style.opacity = '';
     btn.style.pointerEvents = '';
@@ -2093,7 +2093,7 @@ function previewScreenshot(input) {
     preview.style.display = 'block';
     // Mobile fix: removeAttribute works better than .disabled=false on Android
     const btn = document.getElementById('confirmOrderBtn');
-    btn.removeAttribute('disabled');
+    btn.classList.remove('btn-locked');
     btn.style.background = 'var(--green)';
     btn.style.opacity = '1';
     btn.style.pointerEvents = 'auto';

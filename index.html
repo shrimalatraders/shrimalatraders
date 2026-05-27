@@ -2022,43 +2022,29 @@ function closeCart() {
 }
 
 // ─── CHECKOUT ─────────────────────────────────────────
-async function processCheckout() {
-  const total = cart.reduce((s, i) => s + (i.salePrice * i.qty), 0);
-  if (total < MIN_ORDER) return alert(`Minimum order is ₹${MIN_ORDER}`);
+let screenshotDataUrl = null;
 
-  // Show payment modal
+function processCheckout() {
+  const total = cart.reduce((s, i) => s + (i.salePrice * i.qty), 0);
+  if (total < MIN_ORDER) return alert('Minimum order is ₹' + MIN_ORDER);
+
   document.getElementById('paymentTotal').textContent = total;
   document.getElementById('paymentOverlay').classList.add('open');
 
   const btn = document.getElementById('confirmOrderBtn');
+  const preview = document.getElementById('screenshotPreview');
 
   if (screenshotDataUrl) {
-    // Screenshot already uploaded — show it directly, enable confirm button
-    const preview = document.getElementById('screenshotPreview');
     preview.src = screenshotDataUrl;
     preview.style.display = 'block';
     btn.classList.remove('btn-locked');
-    btn.style.background = 'var(--green)';
-    btn.style.opacity = '1';
-    btn.style.pointerEvents = 'auto';
     document.getElementById('uploadInner').style.display = 'none';
     document.getElementById('uploadSuccessBar').classList.add('show');
-    document.getElementById('uploadLabel').style.borderColor = '#27ae60';
-    document.getElementById('uploadLabel').style.borderStyle = 'solid';
   } else {
-    // Fresh — reset everything
-    document.getElementById('screenshotPreview').style.display = 'none';
+    preview.style.display = 'none';
+    preview.src = '';
     btn.classList.add('btn-locked');
-    btn.style.background = '';
-    btn.style.opacity = '';
-    btn.style.pointerEvents = '';
     document.getElementById('screenshotInput').value = '';
-    const uploadLabel = document.getElementById('uploadLabel');
-    if (uploadLabel) {
-      uploadLabel.style.borderColor = '';
-      uploadLabel.style.borderStyle = 'dashed';
-      uploadLabel.style.background = '';
-    }
     document.getElementById('uploadInner').style.display = 'flex';
     document.getElementById('uploadSuccessBar').classList.remove('show');
   }
@@ -2076,10 +2062,6 @@ function copyUPI() {
   });
 }
 
-let screenshotDataUrl = null;
-
-
-
 function previewScreenshot(input) {
   const file = input.files && input.files[0];
   if (!file) return;
@@ -2092,9 +2074,6 @@ function previewScreenshot(input) {
     // Mobile fix: removeAttribute works better than .disabled=false on Android
     const btn = document.getElementById('confirmOrderBtn');
     btn.classList.remove('btn-locked');
-    btn.style.background = 'var(--green)';
-    btn.style.opacity = '1';
-    btn.style.pointerEvents = 'auto';
     // Update upload area UI
     document.getElementById('uploadInner').style.display = 'none';
     document.getElementById('uploadSuccessBar').classList.add('show');
@@ -2109,10 +2088,7 @@ function previewScreenshot(input) {
 }
 
 async function confirmOrder() {
-  if (document.getElementById('confirmOrderBtn').classList.contains('btn-locked')) {
-    return showToast('⚠ Please upload payment screenshot first');
-  }
-  if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot');
+  if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot first');
 
   // Validate customer details
   const cdName = document.getElementById('cd_name').value.trim();

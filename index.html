@@ -1212,13 +1212,25 @@ body.admin-mode .admin-edit { display: flex; }
   <div id="invoiceFrame">
     <!-- ORDER CONFIRM ALERT BANNER -->
     <div id="invoiceConfirmAlert">
-      <div class="alert-title">⚠️ உங்கள் Order இன்னும் Confirm ஆகவில்லை!</div>
+      <div class="alert-title">⚠️ Your Order is NOT Confirmed Yet!</div>
       <div class="alert-sub">
-        Invoice ready! Order confirm ஆக:<br>
-        1️⃣ Invoice Download பண்ணுங்கள் &nbsp;|&nbsp; 2️⃣ கீழே உள்ள WhatsApp button-ஐ click பண்ணுங்கள் &nbsp;|&nbsp; 3️⃣ WhatsApp-ல் <strong>SEND</strong> பண்ணுங்கள்
+        Invoice downloaded! To confirm your order:<br>
+        <strong>Click the WhatsApp button below and press SEND</strong>
       </div>
       <span class="alert-arrow">👇</span>
     </div>
+
+    <!-- WHATSAPP CONFIRM BUTTON (shown inside alert area, always visible) -->
+    <div id="invoiceWABtnWrap" style="display:none; padding:14px 20px 0; background:linear-gradient(135deg,#1a4731,#27ae60);">
+      <button class="inv-whatsapp-confirm" onclick="sendInvoiceWhatsApp()" style="font-size:17px;padding:16px;letter-spacing:0.3px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.522 5.851L.057 23.882l6.174-1.438A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.213-3.667.854.87-3.573-.234-.372A9.818 9.818 0 0112 2.182c5.427 0 9.818 4.391 9.818 9.818 0 5.428-4.391 9.818-9.818 9.818z"/></svg>
+        📲 Click Here — Send on WhatsApp to Confirm Order
+      </button>
+      <p style="text-align:center;font-size:12px;color:rgba(255,255,255,0.85);margin:8px 0 14px;font-weight:600;">
+        ⚠️ WhatsApp opens → Press the SEND button — Order will be confirmed!
+      </p>
+    </div>
+
     <div class="invoice-actions">
       <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Download Invoice</button>
       <button id="inv-close-btn" class="inv-close-btn" onclick="closeInvoice()">✕ Close</button>
@@ -1227,10 +1239,10 @@ body.admin-mode .admin-edit { display: flex; }
     <div style="padding:16px 28px 24px; background:#f9fdf5; border-top: 3px solid #25D366;">
       <button class="inv-whatsapp-confirm" onclick="sendInvoiceWhatsApp()">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.522 5.851L.057 23.882l6.174-1.438A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.37l-.36-.213-3.667.854.87-3.573-.234-.372A9.818 9.818 0 0112 2.182c5.427 0 9.818 4.391 9.818 9.818 0 5.428-4.391 9.818-9.818 9.818z"/></svg>
-        📲 இங்கே Click பண்ணி WhatsApp-ல் SEND பண்ணுங்கள்
+        📲 Send on WhatsApp to Confirm Order
       </button>
       <p style="text-align:center;font-size:13px;color:#c0392b;margin-top:8px;font-weight:700;background:#fdecea;padding:8px;border-radius:8px;">
-        ⚠️ WhatsApp திறந்தவுடன் அனுப்பு (Send) button கட்டாயம் press பண்ணவும் — இல்லாவிட்டால் order confirm ஆகாது!
+        ⚠️ Once WhatsApp opens — press SEND. Order confirmed only after sending!
       </p>
     </div>
   </div>
@@ -1996,6 +2008,9 @@ async function processCheckout() {
   const total = cart.reduce((s, i) => s + (i.salePrice * i.qty), 0);
   if (total < MIN_ORDER) return alert(`Minimum order is ₹${MIN_ORDER}`);
   
+  // Reset screenshot state before showing modal
+  screenshotDataUrl = null;
+  
   // Show payment modal
   document.getElementById('paymentTotal').textContent = total;
   document.getElementById('paymentOverlay').classList.add('open');
@@ -2110,18 +2125,12 @@ async function confirmOrder() {
   // Generate invoice and show overlay with confirmation alert
   generateInvoice(total, orderNo, customerDetails, screenshotDataUrl);
 
-  // Show the order-confirm alert banner inside the invoice overlay
+  // Show the order-confirm alert banner + WA button right below arrow
   document.getElementById('invoiceConfirmAlert').classList.add('show');
+  document.getElementById('invoiceWABtnWrap').style.display = 'block';
 
-  // Auto download invoice then auto-open WhatsApp
-  setTimeout(() => {
-    downloadInvoice();
-    // After 1.5s open WhatsApp with "I have placed order" message
-    setTimeout(() => {
-      const waMsg = encodeURIComponent('Hi Shri Mala Traders! \uD83D\uDED2\nI have placed an order.\n\nOrder No: #' + orderNo + '\nName: ' + cdName + '\nPhone: ' + cdPhone + '\nTotal: \u20B9' + total + '\n\nKindly confirm my order. Thank you! \uD83D\uDE4F');
-      window.open('https://wa.me/919360448830?text=' + waMsg, '_blank');
-    }, 1500);
-  }, 400);
+  // Auto download invoice
+  setTimeout(() => { downloadInvoice(); }, 400);
 
   // Clear customer details form
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
@@ -2210,6 +2219,7 @@ function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl) 
 function closeInvoice() {
   document.getElementById('invoiceOverlay').classList.remove('open');
   document.getElementById('invoiceConfirmAlert').classList.remove('show');
+  document.getElementById('invoiceWABtnWrap').style.display = 'none';
 }
 
 function downloadInvoice() {

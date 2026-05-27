@@ -14,7 +14,7 @@
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
 :root {
   --gold: #c8962a;
@@ -2379,85 +2379,82 @@ function closeInvoice() {
   document.getElementById('invoiceWABtnWrap').style.display = 'none';
 }
 
-async function downloadInvoice() {
+function downloadInvoice() {
   const orderNoEl = document.querySelector('#invoiceContent .inv-no strong');
   const orderNo = orderNoEl ? orderNoEl.textContent.replace('#','') : ('SMT-' + Date.now().toString().slice(-6));
 
-  // Show loading state
-  const dlBtn = document.querySelector('.inv-download');
-  const origText = dlBtn ? dlBtn.textContent : '';
-  if (dlBtn) { dlBtn.textContent = '⏳ Generating PDF...'; dlBtn.disabled = true; }
+  // Get the full invoice HTML content
+  const content = document.getElementById('invoiceContent').innerHTML;
 
-  try {
-    // Build a clean div for PDF rendering with all needed styles inlined
-    const pdfWrap = document.createElement('div');
-    pdfWrap.style.cssText = 'width:580px;padding:30px 34px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#3d2b0e;box-sizing:border-box;';
-
-    const styleEl = document.createElement('style');
-    styleEl.textContent = `
-      .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:2.5px solid #c8962a;padding-bottom:14px;}
-      .inv-shop-name{font-size:21px;color:#1a1208;font-weight:900;letter-spacing:1px;}
-      .inv-shop-sub{font-size:10px;color:#8a7055;letter-spacing:3px;margin-top:3px;}
-      .inv-no{text-align:right;font-size:11px;color:#8a7055;}
-      .inv-no strong{display:block;font-size:14px;color:#1a1208;font-weight:700;}
-      .inv-customer{background:#f9f5ee;border-radius:6px;padding:10px 13px;margin-bottom:16px;font-size:12px;line-height:1.85;border:1px solid #e8dcc8;}
-      .inv-customer strong{color:#1a1208;}
-      .inv-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11.5px;}
-      .inv-table th{background:#1a1208;color:#e8b84b;padding:8px 9px;text-align:left;font-size:10px;letter-spacing:1px;}
-      .inv-table td{padding:8px 9px;border-bottom:1px solid #f0e8d8;vertical-align:middle;}
-      .inv-table tr:last-child td{border-bottom:none;}
-      .inv-table td img{width:38px;height:38px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:6px;}
-      .inv-total-row{display:flex;justify-content:flex-end;margin-bottom:13px;}
-      .inv-total-box{background:#1a1208;color:#e8b84b;border-radius:6px;padding:9px 16px;font-size:16px;font-weight:700;}
-      .inv-upi-note{background:#f0fdf4;border:1.5px solid #27ae60;border-radius:6px;padding:8px 13px;margin:12px 0;text-align:center;font-size:11.5px;color:#27ae60;font-weight:700;}
-      .inv-footer{text-align:center;font-size:10.5px;color:#8a7055;margin-top:16px;border-top:1px solid #eee;padding-top:11px;}
-    `;
-
-    const contentClone = document.getElementById('invoiceContent').cloneNode(true);
-    pdfWrap.appendChild(styleEl);
-    pdfWrap.appendChild(contentClone);
-
-    // Temp append off-screen for rendering
-    pdfWrap.style.position = 'fixed';
-    pdfWrap.style.left = '-9999px';
-    pdfWrap.style.top = '0';
-    document.body.appendChild(pdfWrap);
-
-    const opt = {
-      margin: [8, 8, 8, 8],
-      filename: `Invoice_${orderNo}_ShriMalaTraders.pdf`,
-      image: { type: 'jpeg', quality: 0.90 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        removeContainer: true
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css'] }
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice #${orderNo} – Shri Mala Traders</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: white; padding: 28px 32px; font-family: 'DM Sans', sans-serif; color: #3d2b0e; max-width: 720px; margin: 0 auto; }
+    .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; border-bottom: 2.5px solid #c8962a; padding-bottom: 15px; }
+    .inv-shop-name { font-family: 'Playfair Display', serif; font-size: 24px; color: #1a1208; font-weight: 900; letter-spacing: 1px; }
+    .inv-shop-sub { font-size: 11px; color: #8a7055; letter-spacing: 3px; margin-top: 4px; }
+    .inv-no { text-align: right; font-size: 12px; color: #8a7055; }
+    .inv-no strong { display: block; font-size: 17px; color: #1a1208; font-weight: 700; margin-top: 2px; }
+    .inv-customer { background: #f9f5ee; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; line-height: 1.9; border: 1px solid #e8dcc8; }
+    .inv-customer strong { color: #1a1208; }
+    .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 12.5px; }
+    .inv-table th { background: #1a1208; color: #e8b84b; padding: 10px 11px; text-align: left; font-size: 11px; letter-spacing: 1px; }
+    .inv-table td { padding: 9px 11px; border-bottom: 1px solid #f0e8d8; vertical-align: middle; }
+    .inv-table tr:last-child td { border-bottom: none; }
+    .inv-table tr:nth-child(even) td { background: #fdf8f2; }
+    .inv-table td img { width: 42px; height: 42px; object-fit: cover; border-radius: 5px; vertical-align: middle; margin-right: 7px; }
+    .inv-total-row { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+    .inv-total-box { background: #1a1208; color: #e8b84b; border-radius: 8px; padding: 11px 20px; font-size: 18px; font-weight: 700; }
+    .inv-upi-note { background: #f0fdf4; border: 1.5px solid #27ae60; border-radius: 8px; padding: 10px 16px; margin: 14px 0; text-align: center; font-size: 12px; color: #27ae60; font-weight: 700; }
+    .inv-footer { text-align: center; font-size: 11px; color: #8a7055; margin-top: 18px; border-top: 1px solid #eee; padding-top: 13px; }
+    @media print {
+      body { padding: 16px 20px; }
+      @page { margin: 10mm; size: A4; }
+    }
+  </style>
+</head>
+<body>
+  ${content}
+  <script>
+    // Wait for images to load, then print
+    window.onload = function() {
+      var imgs = document.images;
+      var loaded = 0;
+      if (imgs.length === 0) { window.print(); return; }
+      for (var i = 0; i < imgs.length; i++) {
+        if (imgs[i].complete) { loaded++; if (loaded === imgs.length) { window.print(); } }
+        else {
+          imgs[i].onload = imgs[i].onerror = (function() {
+            loaded++;
+            if (loaded === imgs.length) { setTimeout(function(){ window.print(); }, 200); }
+          });
+        }
+      }
     };
+  <\/script>
+</body>
+</html>`;
 
-    await html2pdf().set(opt).from(pdfWrap).save();
-    document.body.removeChild(pdfWrap);
-    showToast('✅ PDF Invoice downloaded!');
-
-  } catch(err) {
-    console.error('PDF generation error:', err);
-    showToast('⚠ PDF failed — downloading HTML...');
-    // Fallback HTML download
-    let fc = document.getElementById('invoiceContent').innerHTML;
-    fc = fc.replace(/<img[^>]+src="data:image[^"]{200,}"[^>]*>/g,
-      '<span style="display:inline-block;width:28px;height:28px;background:#f0e8d8;border-radius:4px;text-align:center;line-height:28px;font-size:14px;vertical-align:middle;margin-right:6px;">🖼</span>');
-    const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="padding:20px;font-family:sans-serif;">${fc}</body></html>`], {type:'text/html'});
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) {
+    // Popup blocked — fallback to direct download
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `Invoice_${orderNo}.html`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  } finally {
-    if (dlBtn) { dlBtn.textContent = origText; dlBtn.disabled = false; }
+    a.href = url;
+    a.download = 'Invoice_' + orderNo + '_ShriMalaTraders.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('✅ Invoice downloaded! Open the file to print/save as PDF.');
   }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function sendInvoiceWhatsApp() {

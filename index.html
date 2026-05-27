@@ -14,6 +14,7 @@
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root {
   --gold: #c8962a;
@@ -1260,7 +1261,7 @@ body.admin-mode .admin-edit { display: flex; }
 
     <!-- STICKY TOP ACTION BAR -->
     <div id="invoiceActionsBar">
-      <button class="inv-download" onclick="downloadInvoice()" style="flex:1;padding:12px;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:var(--dark);font-family:'DM Sans',sans-serif;">⬇ Download Invoice</button>
+      <button class="inv-download" onclick="downloadInvoice()" style="flex:1;padding:12px;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:var(--dark);font-family:'DM Sans',sans-serif;">⬇ Download PDF</button>
       <button onclick="sendInvoiceWhatsApp()" style="flex:1;padding:12px;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:#25D366;color:white;font-family:'DM Sans',sans-serif;">📲 WhatsApp</button>
       <button onclick="closeInvoice()" style="padding:12px 16px;border-radius:9px;font-size:18px;cursor:pointer;border:1px solid rgba(255,255,255,0.3);background:transparent;color:white;font-family:'DM Sans',sans-serif;">✕</button>
     </div>
@@ -2245,7 +2246,7 @@ async function confirmOrder() {
   waMsg += `🙏 Thank you!`;
 
   // Generate invoice and show overlay with confirmation alert
-  generateInvoice(total, orderNo, customerDetails, screenshotDataUrl);
+  await generateInvoice(total, orderNo, customerDetails, screenshotDataUrl);
 
   // Show the order-confirm alert banner + WA button right below arrow
   document.getElementById('invoiceConfirmAlert').classList.add('show');
@@ -2262,23 +2263,57 @@ async function confirmOrder() {
   screenshotDataUrl = null;
 }
 
+// ─── IMAGE COMPRESS HELPER (for invoice thumbnails) ──
+function compressImageForInvoice(src, size) {
+  return new Promise(resolve => {
+    if (!src || src.startsWith('/')) { resolve(''); return; }
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          // Crop center square
+          const s = Math.min(img.naturalWidth, img.naturalHeight);
+          const sx = (img.naturalWidth - s) / 2, sy = (img.naturalHeight - s) / 2;
+          ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.55));
+        } catch(e) { resolve(''); }
+      };
+      img.onerror = () => resolve('');
+      img.src = src;
+    } catch(e) { resolve(''); }
+  });
+}
+
 // ─── INVOICE GENERATION ──────────────────────────────
-function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl) {
+async function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl) {
   const shotUrl = paymentScreenshotUrl || screenshotDataUrl || null;
   orderNo = orderNo || ('SMT-' + Date.now().toString().slice(-6));
   const now = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
   const cd = customerDetails || {};
 
-  const itemsHTML = cart.map((item, i) => `
+  // Compress all product images to small 44px thumbnails (prevents hang)
+  const compressedImages = await Promise.all(
+    cart.map(item => compressImageForInvoice(item.image, 44))
+  );
+
+  const itemsHTML = cart.map((item, i) => {
+    const thumbSrc = compressedImages[i];
+    const imgTag = thumbSrc
+      ? `<img src="${thumbSrc}" alt="${item.name}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;">`
+      : '';
+    return `
     <tr>
       <td>${i + 1}</td>
-      <td><img src="${item.image || '/placeholder.jpg'}" onerror="this.src='/placeholder.jpg'" alt="${item.name}"> ${item.name}</td>
+      <td style="vertical-align:middle">${imgTag}${item.name}</td>
       <td>${item.category || '-'}</td>
       <td style="text-align:center">${item.qty}</td>
       <td style="text-align:right">₹${item.salePrice}</td>
       <td style="text-align:right;font-weight:700">₹${item.salePrice * item.qty}</td>
     </tr>
-  `).join('');
+  `}).join('');
 
   document.getElementById('invoiceContent').innerHTML = `
     <div class="inv-header">
@@ -2344,50 +2379,85 @@ function closeInvoice() {
   document.getElementById('invoiceWABtnWrap').style.display = 'none';
 }
 
-function downloadInvoice() {
-  const content = document.getElementById('invoiceContent').innerHTML;
+async function downloadInvoice() {
   const orderNoEl = document.querySelector('#invoiceContent .inv-no strong');
   const orderNo = orderNoEl ? orderNoEl.textContent.replace('#','') : ('SMT-' + Date.now().toString().slice(-6));
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice #${orderNo} – Shri Mala Traders</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-      :root{--gold:#c8962a;--gold-light:#e8b84b;--dark:#1a1208;--text:#3d2b0e;--muted:#8a7055;--green:#27ae60;}
-      *{box-sizing:border-box;margin:0;padding:0;}
-      body{background:white;padding:20px;font-family:'DM Sans',sans-serif;color:#3d2b0e;}
-      .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;border-bottom:2px solid #c8962a;padding-bottom:16px;}
-      .inv-shop-name{font-family:'Playfair Display',serif;font-size:22px;color:#1a1208;font-weight:900;}
-      .inv-shop-sub{font-size:12px;color:#8a7055;letter-spacing:2px;}
-      .inv-no{text-align:right;font-size:13px;color:#8a7055;}
-      .inv-no strong{display:block;font-size:16px;color:#1a1208;}
-      .inv-customer{background:#f9f5ee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;line-height:1.8;}
-      .inv-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;}
-      .inv-table th{background:#1a1208;color:#e8b84b;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;}
-      .inv-table td{padding:10px 12px;border-bottom:1px solid #f0e8d8;vertical-align:middle;}
-      .inv-table td img{width:44px;height:44px;object-fit:cover;border-radius:6px;}
-      .inv-total-row{display:flex;justify-content:flex-end;margin-bottom:16px;}
-      .inv-total-box{background:#1a1208;color:#e8b84b;border-radius:8px;padding:12px 20px;font-size:18px;font-weight:700;}
-      .inv-upi-note{background:#f0fdf4;border:1.5px solid #27ae60;border-radius:8px;padding:10px 16px;margin:16px 0;text-align:center;font-size:13px;color:#27ae60;font-weight:700;}
-      .inv-footer{text-align:center;font-size:12px;color:#8a7055;margin-top:20px;border-top:1px solid #eee;padding-top:14px;}
-      @media print{body{padding:0;}}
-    </style>
-    </head><body>
-    <div style="max-width:640px;margin:0 auto">${content}</div>
-    </body></html>`;
+  // Show loading state
+  const dlBtn = document.querySelector('.inv-download');
+  const origText = dlBtn ? dlBtn.textContent : '';
+  if (dlBtn) { dlBtn.textContent = '⏳ Generating PDF...'; dlBtn.disabled = true; }
 
-  // Always blob download — window.open blocked on mobile
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Invoice_${orderNo}_ShriMalaTraders.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  showToast('✅ Invoice downloaded!');
+  try {
+    // Build a clean div for PDF rendering with all needed styles inlined
+    const pdfWrap = document.createElement('div');
+    pdfWrap.style.cssText = 'width:580px;padding:30px 34px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#3d2b0e;box-sizing:border-box;';
+
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:2.5px solid #c8962a;padding-bottom:14px;}
+      .inv-shop-name{font-size:21px;color:#1a1208;font-weight:900;letter-spacing:1px;}
+      .inv-shop-sub{font-size:10px;color:#8a7055;letter-spacing:3px;margin-top:3px;}
+      .inv-no{text-align:right;font-size:11px;color:#8a7055;}
+      .inv-no strong{display:block;font-size:14px;color:#1a1208;font-weight:700;}
+      .inv-customer{background:#f9f5ee;border-radius:6px;padding:10px 13px;margin-bottom:16px;font-size:12px;line-height:1.85;border:1px solid #e8dcc8;}
+      .inv-customer strong{color:#1a1208;}
+      .inv-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11.5px;}
+      .inv-table th{background:#1a1208;color:#e8b84b;padding:8px 9px;text-align:left;font-size:10px;letter-spacing:1px;}
+      .inv-table td{padding:8px 9px;border-bottom:1px solid #f0e8d8;vertical-align:middle;}
+      .inv-table tr:last-child td{border-bottom:none;}
+      .inv-table td img{width:38px;height:38px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:6px;}
+      .inv-total-row{display:flex;justify-content:flex-end;margin-bottom:13px;}
+      .inv-total-box{background:#1a1208;color:#e8b84b;border-radius:6px;padding:9px 16px;font-size:16px;font-weight:700;}
+      .inv-upi-note{background:#f0fdf4;border:1.5px solid #27ae60;border-radius:6px;padding:8px 13px;margin:12px 0;text-align:center;font-size:11.5px;color:#27ae60;font-weight:700;}
+      .inv-footer{text-align:center;font-size:10.5px;color:#8a7055;margin-top:16px;border-top:1px solid #eee;padding-top:11px;}
+    `;
+
+    const contentClone = document.getElementById('invoiceContent').cloneNode(true);
+    pdfWrap.appendChild(styleEl);
+    pdfWrap.appendChild(contentClone);
+
+    // Temp append off-screen for rendering
+    pdfWrap.style.position = 'fixed';
+    pdfWrap.style.left = '-9999px';
+    pdfWrap.style.top = '0';
+    document.body.appendChild(pdfWrap);
+
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: `Invoice_${orderNo}_ShriMalaTraders.pdf`,
+      image: { type: 'jpeg', quality: 0.90 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        removeContainer: true
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css'] }
+    };
+
+    await html2pdf().set(opt).from(pdfWrap).save();
+    document.body.removeChild(pdfWrap);
+    showToast('✅ PDF Invoice downloaded!');
+
+  } catch(err) {
+    console.error('PDF generation error:', err);
+    showToast('⚠ PDF failed — downloading HTML...');
+    // Fallback HTML download
+    let fc = document.getElementById('invoiceContent').innerHTML;
+    fc = fc.replace(/<img[^>]+src="data:image[^"]{200,}"[^>]*>/g,
+      '<span style="display:inline-block;width:28px;height:28px;background:#f0e8d8;border-radius:4px;text-align:center;line-height:28px;font-size:14px;vertical-align:middle;margin-right:6px;">🖼</span>');
+    const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="padding:20px;font-family:sans-serif;">${fc}</body></html>`], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Invoice_${orderNo}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  } finally {
+    if (dlBtn) { dlBtn.textContent = origText; dlBtn.disabled = false; }
+  }
 }
 
 function sendInvoiceWhatsApp() {
@@ -2674,13 +2744,13 @@ function renderAdminOrders(list, orders) {
   }).join('');
 }
 
-function viewOrderInvoice(order) {
+async function viewOrderInvoice(order) {
   // Temporarily restore cart state to generate invoice
   const tempCart = cart;
   cart = order.items || [];
   const tempUser = currentUser;
   currentUser = { email: order.userEmail, name: order.userName };
-  generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot);
+  await generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot);
   cart = tempCart;
   currentUser = tempUser;
 }
@@ -3380,14 +3450,14 @@ function renderMyOrders() {
   }).join('');
 }
 
-function viewMyOrderInvoice(orderStr) {
+async function viewMyOrderInvoice(orderStr) {
   const order = typeof orderStr === 'string' ? JSON.parse(orderStr) : orderStr;
   closeMyOrders();
   const tempCart = cart;
   const tempUser = currentUser;
   cart = order.items || [];
   currentUser = { email: order.userEmail, name: order.userName };
-  generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot);
+  await generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot);
   cart = tempCart;
   currentUser = tempUser;
   setTimeout(() => downloadInvoice(), 300);

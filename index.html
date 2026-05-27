@@ -293,7 +293,7 @@ body.admin-mode .admin-del { display: flex; }
   border: none; border-radius: 10px; font-size: 16px; font-weight: 700;
   cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
 }
-.checkout-btn:disabled { background: #b0b0b0; cursor: not-allowed; }
+.checkout-btn:disabled { background: #b0b0b0; cursor: not-allowed; pointer-events: none; }
 .checkout-btn:not(:disabled):hover { background: #1e8449; }
 
 /* ── ADMIN PANEL ── */
@@ -680,7 +680,7 @@ body.admin-mode .admin-edit { display: flex; }
   cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
   margin-bottom: 8px;
 }
-.confirm-order-btn.btn-locked { background: #b0b0b0 !important; cursor: not-allowed; opacity: 0.6; }
+.confirm-order-btn.btn-locked { background: #b0b0b0 !important; cursor: not-allowed; opacity: 0.6; pointer-events: none; }
 .confirm-order-btn:not(.btn-locked):hover { background: #1e8449; }
 .payment-cancel-btn {
   width: 100%; background: transparent; border: 1.5px solid #dcc89a; color: var(--muted);
@@ -1218,7 +1218,7 @@ body.admin-mode .admin-edit { display: flex; }
     
 
 
-    <button class="confirm-order-btn btn-locked" id="confirmOrderBtn" onclick="confirmOrder()">
+    <button class="confirm-order-btn btn-locked" id="confirmOrderBtn" onclick="confirmOrder()" disabled>
       ✅ Confirm Order
     </button>
     <button class="payment-cancel-btn" id="pm-cancel-btn" onclick="closePayment()">Cancel</button>
@@ -2000,11 +2000,13 @@ function updateCartUI() {
     bar.style.display = 'block';
     bar.className = 'min-order-bar';
     bar.textContent = t('minOrder') + MIN_ORDER + '. ' + t('minOrderAdd') + (MIN_ORDER - total) + t('minOrderAdd2');
+    btn.setAttribute('disabled', 'disabled');
     btn.classList.add('btn-locked');
   } else {
     bar.style.display = 'block';
     bar.className = 'min-order-bar ok';
     bar.textContent = t('minOrderOk');
+    btn.removeAttribute('disabled');
     btn.classList.remove('btn-locked');
   }
 }
@@ -2038,12 +2040,14 @@ function processCheckout() {
     preview.src = screenshotDataUrl;
     preview.style.display = 'block';
     btn.classList.remove('btn-locked');
+    btn.removeAttribute('disabled');
     document.getElementById('uploadInner').style.display = 'none';
     document.getElementById('uploadSuccessBar').classList.add('show');
   } else {
     preview.style.display = 'none';
     preview.src = '';
     btn.classList.add('btn-locked');
+    btn.setAttribute('disabled', 'disabled');
     document.getElementById('screenshotInput').value = '';
     document.getElementById('uploadInner').style.display = 'flex';
     document.getElementById('uploadSuccessBar').classList.remove('show');
@@ -2074,6 +2078,7 @@ function previewScreenshot(input) {
     // Mobile fix: removeAttribute works better than .disabled=false on Android
     const btn = document.getElementById('confirmOrderBtn');
     btn.classList.remove('btn-locked');
+    btn.removeAttribute('disabled');
     // Update upload area UI
     document.getElementById('uploadInner').style.display = 'none';
     document.getElementById('uploadSuccessBar').classList.add('show');

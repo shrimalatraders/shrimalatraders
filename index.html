@@ -1177,12 +1177,12 @@ body.admin-mode .admin-edit { display: flex; }
       </ol>
     </div>
 
-    <div class="screenshot-upload-area" onclick="document.getElementById('screenshotInput').click()">
+    <label for="screenshotInput" class="screenshot-upload-area" id="uploadLabel">
       <input type="file" id="screenshotInput" accept="image/*" onchange="previewScreenshot(this)">
       <div class="upload-icon">📸</div>
-      <p id="pm-upload-text">Click here to upload Payment Screenshot</p>
+      <p id="pm-upload-text">Tap here to upload Payment Screenshot</p>
       <p id="pm-upload-sub" style="font-size:11px;margin-top:4px;">JPG / PNG accepted</p>
-    </div>
+    </label>
     <img id="screenshotPreview" alt="Payment screenshot preview">
 
     <!-- Customer Personal Details -->
@@ -2015,8 +2015,18 @@ async function processCheckout() {
   document.getElementById('paymentTotal').textContent = total;
   document.getElementById('paymentOverlay').classList.add('open');
   document.getElementById('screenshotPreview').style.display = 'none';
-  document.getElementById('confirmOrderBtn').disabled = true;
+  const btn = document.getElementById('confirmOrderBtn');
+  btn.disabled = true;
+  btn.style.background = '';
   document.getElementById('screenshotInput').value = '';
+  // Reset upload label
+  const uploadLabel = document.getElementById('uploadLabel');
+  if (uploadLabel) {
+    uploadLabel.style.borderColor = '';
+    uploadLabel.style.background = '';
+  }
+  const uploadText = document.getElementById('pm-upload-text');
+  if (uploadText) uploadText.textContent = 'Tap here to upload Payment Screenshot';
   history.pushState({ modal: 'payment' }, '');
 }
 
@@ -2035,17 +2045,29 @@ let screenshotDataUrl = null;
 
 
 function previewScreenshot(input) {
-  if (!input.files[0]) return;
+  const file = input.files && input.files[0];
+  if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = function(e) {
     screenshotDataUrl = e.target.result;
     const preview = document.getElementById('screenshotPreview');
     preview.src = screenshotDataUrl;
     preview.style.display = 'block';
-    document.getElementById('confirmOrderBtn').disabled = false;
-    showToast(t('screenshotReady'));
+    const btn = document.getElementById('confirmOrderBtn');
+    btn.disabled = false;
+    btn.style.background = 'var(--green)';
+    const uploadLabel = document.getElementById('uploadLabel');
+    if (uploadLabel) {
+      uploadLabel.style.borderColor = 'var(--green)';
+      uploadLabel.style.background = '#f0fdf4';
+      document.getElementById('pm-upload-text').textContent = '✅ Screenshot uploaded!';
+    }
+    showToast('✅ Screenshot ready! Fill details and confirm order.');
   };
-  reader.readAsDataURL(input.files[0]);
+  reader.onerror = function() {
+    showToast('⚠ Failed to read file. Try again.');
+  };
+  reader.readAsDataURL(file);
 }
 
 async function confirmOrder() {
@@ -2944,22 +2966,57 @@ function showToast(msg) {
 // Restore user session
 if (currentUser) updateAuthUI();
 
-// ─── REVIEWS PANEL ─────────────────────────────────────
-const REVIEWS_DATA = [
-  { id:1, name:"Praveen Kumar", category:"Crockery", rating:5, date:"2025-05-10", tag:"Verified Buyer", text:"Shrimala Traders-ல் Madurai-ல் best wholesale crockery collections இருக்கு. Quality excellent, rates மிகவும் affordable. Bulk purchase-க்கு strongly recommended!" },
-  { id:2, name:"Meena Lakshmi", category:"Return Gifts", rating:5, date:"2025-05-08", tag:"Wedding Function", text:"Wedding function-க்கு return gift items order பண்ணோம். Packaging, finishing, delivery — அனைத்தும் perfect! Customers loved the products." },
-  { id:3, name:"Rakesh Jain", category:"Wholesale", rating:5, date:"2025-04-28", tag:"Retailer", text:"Very low MOQ and genuine wholesale pricing. Retailers and event orders-க்கு best place. Customer support also very friendly!" },
-  { id:4, name:"Sathish Kumar", category:"Silver Items", rating:5, date:"2025-04-20", tag:"Verified Buyer", text:"Premium quality products with latest designs. Silver trays and serving collections are always trending in our store. Highly recommend!" },
-  { id:5, name:"Aarthi Collections", category:"Return Gifts", rating:5, date:"2025-04-15", tag:"Regular Customer", text:"Excellent service and fast response. We regularly purchase return gift items from Shrimala Traders for our shop. Very professional!" },
-  { id:6, name:"Vignesh Raj", category:"Crockery", rating:5, date:"2025-04-10", tag:"Verified Buyer", text:"Products look exactly like premium showroom quality. Rates are budget friendly even for bulk quantities. Worth every rupee!" },
-  { id:7, name:"Priya Events", category:"Return Gifts", rating:5, date:"2025-03-30", tag:"Event Planner", text:"Best supplier for wedding return gifts and fancy crockery items. Delivery was on time and products arrived safely." },
-  { id:8, name:"Harish Traders", category:"Wholesale", rating:5, date:"2025-03-22", tag:"Retailer", text:"Large variety of designs available. Easy ordering process and very professional wholesale service. Will order again!" },
-  { id:9, name:"Kavitha Home Needs", category:"Crockery", rating:5, date:"2025-03-15", tag:"Regular Customer", text:"We have been purchasing from Shrimala Traders for many months. Quality consistency and pricing are the biggest advantages." },
-  { id:10, name:"Dinesh Kumar", category:"Silver Items", rating:5, date:"2025-03-08", tag:"Verified Buyer", text:"Highly recommended for wholesale crockery and gifting items. Premium collections with reliable customer support. 5 stars!" },
+// ─── REVIEWS — JSONBin Cloud ───────────────────────────
+const JSONBIN_KEY = '$2a$10$uSPazhaehaguvAaaquYmQu3xnlVXFApwQKh64eBuPZNhHbVIJaJkK';
+const JSONBIN_BIN = '6a169379f47d5c455c3be59f';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN;
+
+const DEFAULT_REVIEWS = [
+  { id:1, name:"Praveen Kumar", category:"Crockery", rating:5, date:"2026-05-20", tag:"Verified Buyer", text:"Shrimala Traders-ல் Madurai-ல் best wholesale crockery collections இருக்கு. Quality excellent, rates மிகவும் affordable. Bulk purchase-க்கு strongly recommended!" },
+  { id:2, name:"Meena Lakshmi", category:"Return Gifts", rating:5, date:"2026-05-18", tag:"Wedding Function", text:"Wedding function-க்கு return gift items order பண்ணோம். Packaging, finishing, delivery — அனைத்தும் perfect! Customers loved the products." },
+  { id:3, name:"Rakesh Jain", category:"Wholesale", rating:5, date:"2026-05-10", tag:"Retailer", text:"Very low MOQ and genuine wholesale pricing. Retailers and event orders-க்கு best place. Customer support also very friendly!" },
+  { id:4, name:"Sathish Kumar", category:"Silver Items", rating:5, date:"2026-05-05", tag:"Verified Buyer", text:"Premium quality products with latest designs. Silver trays and serving collections are always trending in our store. Highly recommend!" },
+  { id:5, name:"Aarthi Collections", category:"Return Gifts", rating:5, date:"2026-04-28", tag:"Regular Customer", text:"Excellent service and fast response. We regularly purchase return gift items from Shrimala Traders for our shop. Very professional!" },
+  { id:6, name:"Vignesh Raj", category:"Crockery", rating:5, date:"2026-04-20", tag:"Verified Buyer", text:"Products look exactly like premium showroom quality. Rates are budget friendly even for bulk quantities. Worth every rupee!" },
+  { id:7, name:"Priya Events", category:"Return Gifts", rating:5, date:"2026-04-10", tag:"Event Planner", text:"Best supplier for wedding return gifts and fancy crockery items. Delivery was on time and products arrived safely." },
+  { id:8, name:"Harish Traders", category:"Wholesale", rating:5, date:"2026-03-28", tag:"Retailer", text:"Large variety of designs available. Easy ordering process and very professional wholesale service. Will order again!" },
+  { id:9, name:"Kavitha Home Needs", category:"Crockery", rating:5, date:"2026-03-15", tag:"Regular Customer", text:"We have been purchasing from Shrimala Traders for many months. Quality consistency and pricing are the biggest advantages." },
+  { id:10, name:"Dinesh Kumar", category:"Silver Items", rating:5, date:"2026-03-05", tag:"Verified Buyer", text:"Highly recommended for wholesale crockery and gifting items. Premium collections with reliable customer support. 5 stars!" },
 ];
 
+let REVIEWS_DATA = [...DEFAULT_REVIEWS];
 let activeReviewCat = 'All';
 let selectedReviewStar = 0;
+
+async function fetchCloudReviews() {
+  try {
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const data = await res.json();
+    const cloud = (data.record && data.record.reviews) ? data.record.reviews : [];
+    // Merge: cloud reviews on top, then default ones not already in cloud
+    const cloudIds = new Set(cloud.map(r => r.id));
+    const merged = [...cloud, ...DEFAULT_REVIEWS.filter(r => !cloudIds.has(r.id))];
+    REVIEWS_DATA = merged;
+    return merged;
+  } catch(e) {
+    return REVIEWS_DATA;
+  }
+}
+
+async function saveCloudReviews(reviews) {
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_KEY
+      },
+      body: JSON.stringify({ reviews: reviews })
+    });
+  } catch(e) {}
+}
 
 function toggleWriteReviewForm() {
   const form = document.getElementById('writeReviewForm');
@@ -2986,27 +3043,30 @@ function updateStarDisplay(val) {
   });
 }
 
-function submitReview() {
+async function submitReview() {
   const name = document.getElementById('rv_name').value.trim();
   const cat = document.getElementById('rv_cat').value;
   const text = document.getElementById('rv_text').value.trim();
-  if (!name) { showToast('\u2757 \u0baa\u0bc6\u0baf\u0bb0\u0bcd \u0b95\u0bca\u0b9f\u0bc1\u0b99\u0bcd\u0b95\u0bb3\u0bcd'); return; }
-  if (!selectedReviewStar) { showToast('\u2757 Rating \u0ba4\u0bc7\u0bb0\u0bcd\u0bb5\u0bc1 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bc1\u0b99\u0bcd\u0b95\u0bb3\u0bcd'); return; }
-  if (!cat) { showToast('\u2757 Category \u0ba4\u0bc7\u0bb0\u0bcd\u0bb5\u0bc1 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bc1\u0b99\u0bcd\u0b95\u0bb3\u0bcd'); return; }
-  if (!text || text.length < 10) { showToast('\u2757 Review \u0b95\u0bc1\u0bb1\u0bc8\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1 10 letters \u0b8e\u0bb4\u0bc1\u0ba4\u0bc1\u0b99\u0bcd\u0b95\u0bb3\u0bcd'); return; }
+  if (!name) { showToast('⚠ Please enter your name'); return; }
+  if (!selectedReviewStar) { showToast('⚠ Please select a rating'); return; }
+  if (!cat) { showToast('⚠ Please select a category'); return; }
+  if (!text || text.length < 10) { showToast('⚠ Write at least 10 characters'); return; }
 
-  const today = new Date().toISOString();
   const newReview = {
     id: Date.now(),
     name, category: cat, rating: selectedReviewStar,
-    date: today, tag: 'Verified Customer', text
+    date: new Date().toISOString(), tag: 'Verified Customer', text
   };
 
-  const saved = JSON.parse(localStorage.getItem('smt_reviews') || '[]');
-  saved.unshift(newReview);
-  localStorage.setItem('smt_reviews', JSON.stringify(saved));
+  showToast('⏳ Saving your review...');
 
-  REVIEWS_DATA.unshift(newReview);
+  // Add to top of cloud reviews (only user-submitted, not default)
+  const cloudOnly = REVIEWS_DATA.filter(r => !DEFAULT_REVIEWS.find(d => d.id === r.id));
+  const updatedCloud = [newReview, ...cloudOnly];
+  await saveCloudReviews(updatedCloud);
+
+  // Update local display
+  REVIEWS_DATA = [newReview, ...REVIEWS_DATA];
 
   toggleWriteReviewForm();
   activeReviewCat = 'All';
@@ -3017,7 +3077,7 @@ function submitReview() {
   const allBtn = document.querySelector('.rev-cat-btn[data-cat="All"]');
   if (allBtn) { allBtn.style.background='var(--gold)'; allBtn.style.borderColor='var(--gold)'; allBtn.style.color='var(--dark)'; allBtn.style.fontWeight='700'; }
   renderReviews('All');
-  showToast('\u2705 \u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd review submit \u0b86\u0ba9\u0ba4\u0bc1! \u0ba8\u0ba9\u0bcd\u0bb1\u0bbf \ud83d\ude4f');
+  showToast('✅ Review submitted! Thank you 🙏');
 }
 
 function shareReviewLink() {
@@ -3038,17 +3098,22 @@ function shareReviewLink() {
 }
 
 function openReviewsPanel() {
-  // Load any saved user reviews from localStorage and merge to top
-  try {
-    const saved = JSON.parse(localStorage.getItem('smt_reviews') || '[]');
-    saved.forEach(r => {
-      if (!REVIEWS_DATA.find(x => x.id === r.id)) REVIEWS_DATA.unshift(r);
-    });
-  } catch(e) {}
   document.getElementById('reviewsPanel').style.transform = 'translateX(0)';
   document.getElementById('reviewsOverlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
+  // Show default reviews immediately, then load cloud
   renderReviews(activeReviewCat);
+  const list = document.getElementById('reviewsList');
+  const loadingEl = document.createElement('div');
+  loadingEl.id = 'reviewsLoading';
+  loadingEl.style.cssText = 'text-align:center;padding:12px;font-size:12px;color:var(--muted);';
+  loadingEl.textContent = '⏳ Loading latest reviews...';
+  list.prepend(loadingEl);
+  fetchCloudReviews().then(() => {
+    const el = document.getElementById('reviewsLoading');
+    if (el) el.remove();
+    renderReviews(activeReviewCat);
+  });
 }
 
 function closeReviewsPanel() {

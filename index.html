@@ -657,32 +657,30 @@ body.admin-mode .admin-edit { display: flex; }
 .payment-amount-box .amt-label { font-size: 12px; color: var(--muted); }
 .payment-amount-box .amt-value { font-size: 22px; font-weight: 700; color: var(--dark); }
 .screenshot-upload-area {
-  border: 3px dashed #3b82f6; border-radius: 14px; padding: 0;
-  text-align: center; cursor: pointer; margin-bottom: 14px; transition: all 0.25s;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  overflow: hidden; position: relative;
+  border: 2px solid var(--gold); border-radius: 10px; padding: 0;
+  text-align: center; cursor: pointer; margin-bottom: 14px; transition: all 0.2s;
+  background: #fdf6e9; overflow: hidden; position: relative;
 }
-.screenshot-upload-area:hover { border-color: #2563eb; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(59,130,246,0.25); }
-.screenshot-upload-area:active { transform: translateY(0); }
+.screenshot-upload-area:active { opacity: 0.85; }
 .screenshot-upload-area input[type=file] { display: none; }
-.upload-inner { padding: 28px 20px 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.screenshot-upload-area .upload-icon { font-size: 48px; margin-bottom: 4px; filter: drop-shadow(0 2px 8px rgba(59,130,246,0.4)); }
-.upload-main-text { font-size: 15px; font-weight: 700; color: #1e40af; text-align: center; }
-.upload-sub-text { font-size: 12px; color: #6b7280; }
-.upload-badge { background: #3b82f6; color: white; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 20px; letter-spacing: 1px; margin-top: 4px; }
-.upload-success-bar { display: none; background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 16px 18px; flex-direction: row; align-items: center; gap: 12px; }
+.upload-inner { padding: 22px 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.screenshot-upload-area .upload-icon { font-size: 36px; margin-bottom: 4px; }
+.upload-main-text { font-size: 14px; font-weight: 700; color: var(--dark); text-align: center; }
+.upload-sub-text { font-size: 12px; color: var(--muted); }
+.upload-badge { background: var(--gold); color: var(--dark); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; margin-top: 4px; }
+.upload-success-bar { display: none; background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 14px 16px; flex-direction: row; align-items: center; gap: 10px; }
 .upload-success-bar.show { display: flex; }
-.upload-success-bar .success-icon { font-size: 28px; }
+.upload-success-bar .success-icon { font-size: 24px; }
 .upload-success-bar .success-text { font-size: 14px; font-weight: 700; color: white; }
 .upload-success-bar .change-text { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
-#screenshotPreview { width: 100%; border-radius: 0 0 12px 12px; margin-bottom: 14px; display: none; border-top: 2px solid #27ae60; max-height: 220px; object-fit: contain; background: #f0fdf4; }
+#screenshotPreview { width: 100%; border-radius: 0 0 8px 8px; margin-bottom: 14px; display: none; border-top: 2px solid #27ae60; max-height: 220px; object-fit: contain; background: #f0fdf4; }
 .confirm-order-btn {
   width: 100%; background: var(--green); color: white; border: none;
   padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 700;
   cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
   margin-bottom: 8px;
 }
-.confirm-order-btn.btn-locked { background: #b0b0b0 !important; cursor: not-allowed; pointer-events: none; opacity: 0.6; }
+.confirm-order-btn.btn-locked { background: #b0b0b0 !important; cursor: not-allowed; opacity: 0.6; }
 .confirm-order-btn:not(.btn-locked):hover { background: #1e8449; }
 .payment-cancel-btn {
   width: 100%; background: transparent; border: 1.5px solid #dcc89a; color: var(--muted);
@@ -2111,6 +2109,9 @@ function previewScreenshot(input) {
 }
 
 async function confirmOrder() {
+  if (document.getElementById('confirmOrderBtn').classList.contains('btn-locked')) {
+    return showToast('⚠ Please upload payment screenshot first');
+  }
   if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot');
 
   // Validate customer details

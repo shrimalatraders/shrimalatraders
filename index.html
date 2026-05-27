@@ -657,19 +657,19 @@ body.admin-mode .admin-edit { display: flex; }
 .payment-amount-box .amt-label { font-size: 12px; color: var(--muted); }
 .payment-amount-box .amt-value { font-size: 22px; font-weight: 700; color: var(--dark); }
 .screenshot-upload-area {
-  border: 2.5px dashed #dcc89a; border-radius: 14px; padding: 0;
+  border: 3px dashed #3b82f6; border-radius: 14px; padding: 0;
   text-align: center; cursor: pointer; margin-bottom: 14px; transition: all 0.25s;
-  background: linear-gradient(135deg, #fdf6e9 0%, #fff9f0 100%);
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   overflow: hidden; position: relative;
 }
-.screenshot-upload-area:hover { border-color: var(--gold); background: linear-gradient(135deg, #fef9ee 0%, #fff5e0 100%); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,150,42,0.18); }
+.screenshot-upload-area:hover { border-color: #2563eb; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(59,130,246,0.25); }
 .screenshot-upload-area:active { transform: translateY(0); }
 .screenshot-upload-area input[type=file] { display: none; }
 .upload-inner { padding: 28px 20px 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.screenshot-upload-area .upload-icon { font-size: 48px; margin-bottom: 4px; filter: drop-shadow(0 2px 6px rgba(200,150,42,0.3)); }
-.upload-main-text { font-size: 15px; font-weight: 700; color: var(--dark); text-align: center; }
-.upload-sub-text { font-size: 12px; color: var(--muted); }
-.upload-badge { background: var(--gold); color: var(--dark); font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 20px; letter-spacing: 1px; margin-top: 4px; }
+.screenshot-upload-area .upload-icon { font-size: 48px; margin-bottom: 4px; filter: drop-shadow(0 2px 8px rgba(59,130,246,0.4)); }
+.upload-main-text { font-size: 15px; font-weight: 700; color: #1e40af; text-align: center; }
+.upload-sub-text { font-size: 12px; color: #6b7280; }
+.upload-badge { background: #3b82f6; color: white; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 20px; letter-spacing: 1px; margin-top: 4px; }
 .upload-success-bar { display: none; background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 16px 18px; flex-direction: row; align-items: center; gap: 12px; }
 .upload-success-bar.show { display: flex; }
 .upload-success-bar .success-icon { font-size: 28px; }
@@ -2027,27 +2027,44 @@ function closeCart() {
 async function processCheckout() {
   const total = cart.reduce((s, i) => s + (i.salePrice * i.qty), 0);
   if (total < MIN_ORDER) return alert(`Minimum order is ₹${MIN_ORDER}`);
-  
-  // Reset screenshot state before showing modal
-  screenshotDataUrl = null;
-  
+
   // Show payment modal
   document.getElementById('paymentTotal').textContent = total;
   document.getElementById('paymentOverlay').classList.add('open');
-  document.getElementById('screenshotPreview').style.display = 'none';
+
   const btn = document.getElementById('confirmOrderBtn');
-  btn.disabled = true;
-  btn.style.background = '';
-  document.getElementById('screenshotInput').value = '';
-  // Reset upload label
-  const uploadLabel = document.getElementById('uploadLabel');
-  if (uploadLabel) {
-    uploadLabel.style.borderColor = '';
-    uploadLabel.style.borderStyle = 'dashed';
-    uploadLabel.style.background = '';
+
+  if (screenshotDataUrl) {
+    // Screenshot already uploaded — show it directly, enable confirm button
+    const preview = document.getElementById('screenshotPreview');
+    preview.src = screenshotDataUrl;
+    preview.style.display = 'block';
+    btn.removeAttribute('disabled');
+    btn.style.background = 'var(--green)';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    document.getElementById('uploadInner').style.display = 'none';
+    document.getElementById('uploadSuccessBar').classList.add('show');
+    document.getElementById('uploadLabel').style.borderColor = '#27ae60';
+    document.getElementById('uploadLabel').style.borderStyle = 'solid';
+  } else {
+    // Fresh — reset everything
+    document.getElementById('screenshotPreview').style.display = 'none';
+    btn.setAttribute('disabled', 'true');
+    btn.style.background = '';
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+    document.getElementById('screenshotInput').value = '';
+    const uploadLabel = document.getElementById('uploadLabel');
+    if (uploadLabel) {
+      uploadLabel.style.borderColor = '';
+      uploadLabel.style.borderStyle = 'dashed';
+      uploadLabel.style.background = '';
+    }
+    document.getElementById('uploadInner').style.display = 'flex';
+    document.getElementById('uploadSuccessBar').classList.remove('show');
   }
-  document.getElementById('uploadInner').style.display = 'flex';
-  document.getElementById('uploadSuccessBar').classList.remove('show');
+
   history.pushState({ modal: 'payment' }, '');
 }
 
@@ -2277,7 +2294,7 @@ function downloadInvoice() {
     <title>Invoice #${orderNo} – Shri Mala Traders</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-      :root{--gold:#c8962a;--gold-light:#e8b84b;--dark:#1a1208;--cream2:#f5ead2;--text:#3d2b0e;--muted:#8a7055;--green:#27ae60;--white:#fff;}
+      :root{--gold:#c8962a;--gold-light:#e8b84b;--dark:#1a1208;--text:#3d2b0e;--muted:#8a7055;--green:#27ae60;}
       *{box-sizing:border-box;margin:0;padding:0;}
       body{background:white;padding:20px;font-family:'DM Sans',sans-serif;color:#3d2b0e;}
       .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;border-bottom:2px solid #c8962a;padding-bottom:16px;}
@@ -2285,7 +2302,7 @@ function downloadInvoice() {
       .inv-shop-sub{font-size:12px;color:#8a7055;letter-spacing:2px;}
       .inv-no{text-align:right;font-size:13px;color:#8a7055;}
       .inv-no strong{display:block;font-size:16px;color:#1a1208;}
-      .inv-customer{background:#f9f5ee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;}
+      .inv-customer{background:#f9f5ee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;line-height:1.8;}
       .inv-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;}
       .inv-table th{background:#1a1208;color:#e8b84b;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;}
       .inv-table td{padding:10px 12px;border-bottom:1px solid #f0e8d8;vertical-align:middle;}
@@ -2294,22 +2311,19 @@ function downloadInvoice() {
       .inv-total-box{background:#1a1208;color:#e8b84b;border-radius:8px;padding:12px 20px;font-size:18px;font-weight:700;}
       .inv-upi-note{background:#f0fdf4;border:1.5px solid #27ae60;border-radius:8px;padding:10px 16px;margin:16px 0;text-align:center;font-size:13px;color:#27ae60;font-weight:700;}
       .inv-footer{text-align:center;font-size:12px;color:#8a7055;margin-top:20px;border-top:1px solid #eee;padding-top:14px;}
-      .print-btn{display:block;width:100%;padding:14px;background:#27ae60;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:16px;font-family:'DM Sans',sans-serif;}
-      @media print{.print-btn{display:none;}}
+      @media print{body{padding:0;}}
     </style>
     </head><body>
-    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
     <div style="max-width:640px;margin:0 auto">${content}</div>
     </body></html>`;
 
-  // Mobile-safe: open in new tab (works on both Android & iOS)
+  // Open in new tab — screenshot included as base64 so no hang
   const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);
     win.document.close();
-    showToast('📄 Invoice opened! Use Print → Save as PDF to save.');
   } else {
-    // Popup blocked fallback — blob download
+    // Popup blocked — blob download fallback
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2319,7 +2333,6 @@ function downloadInvoice() {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 5000);
-    showToast('⬇️ Invoice downloaded!');
   }
 }
 

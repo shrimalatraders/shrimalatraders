@@ -665,17 +665,17 @@ body.admin-mode .admin-edit { display: flex; }
 .screenshot-upload-area:hover { border-color: var(--gold); background: linear-gradient(135deg, #fef9ee 0%, #fff5e0 100%); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,150,42,0.18); }
 .screenshot-upload-area:active { transform: translateY(0); }
 .screenshot-upload-area input[type=file] { display: none; }
-.upload-inner { padding: 22px 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.screenshot-upload-area .upload-icon { font-size: 42px; margin-bottom: 4px; filter: drop-shadow(0 2px 6px rgba(200,150,42,0.3)); }
-.upload-main-text { font-size: 15px; font-weight: 700; color: var(--dark); }
+.upload-inner { padding: 28px 20px 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.screenshot-upload-area .upload-icon { font-size: 48px; margin-bottom: 4px; filter: drop-shadow(0 2px 6px rgba(200,150,42,0.3)); }
+.upload-main-text { font-size: 15px; font-weight: 700; color: var(--dark); text-align: center; }
 .upload-sub-text { font-size: 12px; color: var(--muted); }
-.upload-badge { background: var(--gold); color: var(--dark); font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px; margin-top: 2px; }
-.upload-success-bar { display: none; background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 12px 16px; flex-direction: row; align-items: center; gap: 10px; }
+.upload-badge { background: var(--gold); color: var(--dark); font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 20px; letter-spacing: 1px; margin-top: 4px; }
+.upload-success-bar { display: none; background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 16px 18px; flex-direction: row; align-items: center; gap: 12px; }
 .upload-success-bar.show { display: flex; }
-.upload-success-bar .success-icon { font-size: 22px; }
-.upload-success-bar .success-text { font-size: 13px; font-weight: 700; color: white; }
-.upload-success-bar .change-text { font-size: 11px; color: rgba(255,255,255,0.8); }
-#screenshotPreview { width: 100%; border-radius: 0 0 12px 12px; margin-bottom: 14px; display: none; border-top: 2px solid #27ae60; max-height: 200px; object-fit: cover; }
+.upload-success-bar .success-icon { font-size: 28px; }
+.upload-success-bar .success-text { font-size: 14px; font-weight: 700; color: white; }
+.upload-success-bar .change-text { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+#screenshotPreview { width: 100%; border-radius: 0 0 12px 12px; margin-bottom: 14px; display: none; border-top: 2px solid #27ae60; max-height: 220px; object-fit: contain; background: #f0fdf4; }
 .confirm-order-btn {
   width: 100%; background: var(--green); color: white; border: none;
   padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 700;
@@ -2074,9 +2074,12 @@ function previewScreenshot(input) {
     const preview = document.getElementById('screenshotPreview');
     preview.src = screenshotDataUrl;
     preview.style.display = 'block';
+    // Mobile fix: removeAttribute works better than .disabled=false on Android
     const btn = document.getElementById('confirmOrderBtn');
-    btn.disabled = false;
+    btn.removeAttribute('disabled');
     btn.style.background = 'var(--green)';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
     // Update upload area UI
     document.getElementById('uploadInner').style.display = 'none';
     document.getElementById('uploadSuccessBar').classList.add('show');
@@ -2269,35 +2272,55 @@ function downloadInvoice() {
   const orderNoEl = document.querySelector('#invoiceContent .inv-no strong');
   const orderNo = orderNoEl ? orderNoEl.textContent.replace('#','') : ('SMT-' + Date.now().toString().slice(-6));
 
-  const styles = Array.from(document.styleSheets).map(s => {
-    try { return Array.from(s.cssRules).map(r => r.cssText).join('\n'); } catch(e) { return ''; }
-  }).join('\n');
-
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #${orderNo} – Shri Mala Traders</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-      :root{--gold:#c8962a;--gold-light:#e8b84b;--dark:#1a1208;--dark2:#2c1f0a;--cream:#fdf6e9;--cream2:#f5ead2;--text:#3d2b0e;--muted:#8a7055;--red:#c0392b;--green:#27ae60;--white:#fff;}
-      ${styles}
-      body{background:white;padding:24px;font-family:'DM Sans',sans-serif;}
-      @media print{body{padding:0;} .no-print{display:none}}
+      :root{--gold:#c8962a;--gold-light:#e8b84b;--dark:#1a1208;--cream2:#f5ead2;--text:#3d2b0e;--muted:#8a7055;--green:#27ae60;--white:#fff;}
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{background:white;padding:20px;font-family:'DM Sans',sans-serif;color:#3d2b0e;}
+      .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;border-bottom:2px solid #c8962a;padding-bottom:16px;}
+      .inv-shop-name{font-family:'Playfair Display',serif;font-size:22px;color:#1a1208;font-weight:900;}
+      .inv-shop-sub{font-size:12px;color:#8a7055;letter-spacing:2px;}
+      .inv-no{text-align:right;font-size:13px;color:#8a7055;}
+      .inv-no strong{display:block;font-size:16px;color:#1a1208;}
+      .inv-customer{background:#f9f5ee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;}
+      .inv-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;}
+      .inv-table th{background:#1a1208;color:#e8b84b;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;}
+      .inv-table td{padding:10px 12px;border-bottom:1px solid #f0e8d8;vertical-align:middle;}
+      .inv-table td img{width:44px;height:44px;object-fit:cover;border-radius:6px;}
+      .inv-total-row{display:flex;justify-content:flex-end;margin-bottom:16px;}
+      .inv-total-box{background:#1a1208;color:#e8b84b;border-radius:8px;padding:12px 20px;font-size:18px;font-weight:700;}
+      .inv-upi-note{background:#f0fdf4;border:1.5px solid #27ae60;border-radius:8px;padding:10px 16px;margin:16px 0;text-align:center;font-size:13px;color:#27ae60;font-weight:700;}
+      .inv-footer{text-align:center;font-size:12px;color:#8a7055;margin-top:20px;border-top:1px solid #eee;padding-top:14px;}
+      .print-btn{display:block;width:100%;padding:14px;background:#27ae60;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:16px;font-family:'DM Sans',sans-serif;}
+      @media print{.print-btn{display:none;}}
     </style>
     </head><body>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
     <div style="max-width:640px;margin:0 auto">${content}</div>
     </body></html>`;
 
-  // Create blob and trigger direct download (stays on same page)
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Invoice_${orderNo}_ShriMalaTraders.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-  showToast('⬇️ Invoice downloaded! Check your Downloads folder.');
+  // Mobile-safe: open in new tab (works on both Android & iOS)
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+    showToast('📄 Invoice opened! Use Print → Save as PDF to save.');
+  } else {
+    // Popup blocked fallback — blob download
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Invoice_${orderNo}_ShriMalaTraders.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast('⬇️ Invoice downloaded!');
+  }
 }
 
 function sendInvoiceWhatsApp() {

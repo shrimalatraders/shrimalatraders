@@ -657,15 +657,25 @@ body.admin-mode .admin-edit { display: flex; }
 .payment-amount-box .amt-label { font-size: 12px; color: var(--muted); }
 .payment-amount-box .amt-value { font-size: 22px; font-weight: 700; color: var(--dark); }
 .screenshot-upload-area {
-  border: 2px dashed #dcc89a; border-radius: 10px; padding: 20px;
-  text-align: center; cursor: pointer; margin-bottom: 14px; transition: border-color 0.2s;
-  background: #fdf6e9;
+  border: 2.5px dashed #dcc89a; border-radius: 14px; padding: 0;
+  text-align: center; cursor: pointer; margin-bottom: 14px; transition: all 0.25s;
+  background: linear-gradient(135deg, #fdf6e9 0%, #fff9f0 100%);
+  overflow: hidden; position: relative;
 }
-.screenshot-upload-area:hover { border-color: var(--gold); }
+.screenshot-upload-area:hover { border-color: var(--gold); background: linear-gradient(135deg, #fef9ee 0%, #fff5e0 100%); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,150,42,0.18); }
+.screenshot-upload-area:active { transform: translateY(0); }
 .screenshot-upload-area input[type=file] { display: none; }
-.screenshot-upload-area .upload-icon { font-size: 36px; margin-bottom: 8px; }
-.screenshot-upload-area p { font-size: 13px; color: var(--muted); margin: 0; }
-#screenshotPreview { width: 100%; border-radius: 8px; margin-bottom: 14px; display: none; border: 1.5px solid #dcc89a; }
+.upload-inner { padding: 22px 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.screenshot-upload-area .upload-icon { font-size: 42px; margin-bottom: 4px; filter: drop-shadow(0 2px 6px rgba(200,150,42,0.3)); }
+.upload-main-text { font-size: 15px; font-weight: 700; color: var(--dark); }
+.upload-sub-text { font-size: 12px; color: var(--muted); }
+.upload-badge { background: var(--gold); color: var(--dark); font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px; margin-top: 2px; }
+.upload-success-bar { display: none; background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 12px 16px; flex-direction: row; align-items: center; gap: 10px; }
+.upload-success-bar.show { display: flex; }
+.upload-success-bar .success-icon { font-size: 22px; }
+.upload-success-bar .success-text { font-size: 13px; font-weight: 700; color: white; }
+.upload-success-bar .change-text { font-size: 11px; color: rgba(255,255,255,0.8); }
+#screenshotPreview { width: 100%; border-radius: 0 0 12px 12px; margin-bottom: 14px; display: none; border-top: 2px solid #27ae60; max-height: 200px; object-fit: cover; }
 .confirm-order-btn {
   width: 100%; background: var(--green); color: white; border: none;
   padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 700;
@@ -1179,9 +1189,19 @@ body.admin-mode .admin-edit { display: flex; }
 
     <label for="screenshotInput" class="screenshot-upload-area" id="uploadLabel">
       <input type="file" id="screenshotInput" accept="image/*" onchange="previewScreenshot(this)">
-      <div class="upload-icon">📸</div>
-      <p id="pm-upload-text">Tap here to upload Payment Screenshot</p>
-      <p id="pm-upload-sub" style="font-size:11px;margin-top:4px;">JPG / PNG accepted</p>
+      <div class="upload-inner" id="uploadInner">
+        <div class="upload-icon">📸</div>
+        <div class="upload-main-text" id="pm-upload-text">Tap to Upload Payment Screenshot</div>
+        <div class="upload-sub-text" id="pm-upload-sub">JPG / PNG accepted</div>
+        <div class="upload-badge">REQUIRED</div>
+      </div>
+      <div class="upload-success-bar" id="uploadSuccessBar">
+        <span class="success-icon">✅</span>
+        <div>
+          <div class="success-text">Screenshot uploaded!</div>
+          <div class="change-text">Tap to change photo</div>
+        </div>
+      </div>
     </label>
     <img id="screenshotPreview" alt="Payment screenshot preview">
 
@@ -2023,10 +2043,11 @@ async function processCheckout() {
   const uploadLabel = document.getElementById('uploadLabel');
   if (uploadLabel) {
     uploadLabel.style.borderColor = '';
+    uploadLabel.style.borderStyle = 'dashed';
     uploadLabel.style.background = '';
   }
-  const uploadText = document.getElementById('pm-upload-text');
-  if (uploadText) uploadText.textContent = 'Tap here to upload Payment Screenshot';
+  document.getElementById('uploadInner').style.display = 'flex';
+  document.getElementById('uploadSuccessBar').classList.remove('show');
   history.pushState({ modal: 'payment' }, '');
 }
 
@@ -2056,12 +2077,11 @@ function previewScreenshot(input) {
     const btn = document.getElementById('confirmOrderBtn');
     btn.disabled = false;
     btn.style.background = 'var(--green)';
-    const uploadLabel = document.getElementById('uploadLabel');
-    if (uploadLabel) {
-      uploadLabel.style.borderColor = 'var(--green)';
-      uploadLabel.style.background = '#f0fdf4';
-      document.getElementById('pm-upload-text').textContent = '✅ Screenshot uploaded!';
-    }
+    // Update upload area UI
+    document.getElementById('uploadInner').style.display = 'none';
+    document.getElementById('uploadSuccessBar').classList.add('show');
+    document.getElementById('uploadLabel').style.borderColor = '#27ae60';
+    document.getElementById('uploadLabel').style.borderStyle = 'solid';
     showToast('✅ Screenshot ready! Fill details and confirm order.');
   };
   reader.onerror = function() {
@@ -2246,20 +2266,38 @@ function closeInvoice() {
 
 function downloadInvoice() {
   const content = document.getElementById('invoiceContent').innerHTML;
+  const orderNoEl = document.querySelector('#invoiceContent .inv-no strong');
+  const orderNo = orderNoEl ? orderNoEl.textContent.replace('#','') : ('SMT-' + Date.now().toString().slice(-6));
+
   const styles = Array.from(document.styleSheets).map(s => {
     try { return Array.from(s.cssRules).map(r => r.cssText).join('\n'); } catch(e) { return ''; }
   }).join('\n');
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>Invoice</title>
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Invoice #${orderNo} – Shri Mala Traders</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>${styles} body{background:white;padding:20px;} @media print{.no-print{display:none}}</style>
+    <style>
+      :root{--gold:#c8962a;--gold-light:#e8b84b;--dark:#1a1208;--dark2:#2c1f0a;--cream:#fdf6e9;--cream2:#f5ead2;--text:#3d2b0e;--muted:#8a7055;--red:#c0392b;--green:#27ae60;--white:#fff;}
+      ${styles}
+      body{background:white;padding:24px;font-family:'DM Sans',sans-serif;}
+      @media print{body{padding:0;} .no-print{display:none}}
+    </style>
     </head><body>
     <div style="max-width:640px;margin:0 auto">${content}</div>
-    <script>window.onload=()=>{window.print();}<\/script>
-    </body></html>`);
-  win.document.close();
-  showToast(t('printMsg'));
+    </body></html>`;
+
+  // Create blob and trigger direct download (stays on same page)
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Invoice_${orderNo}_ShriMalaTraders.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  showToast('⬇️ Invoice downloaded! Check your Downloads folder.');
 }
 
 function sendInvoiceWhatsApp() {
@@ -2285,18 +2323,8 @@ function sendInvoiceWhatsApp() {
   const invCust = document.querySelector('#invoiceContent .inv-customer');
   const custText = invCust ? invCust.innerText.replace(/\n/g,' | ') : '';
 
-  let msg = `🛒 *New Order – Shri Mala Traders*%0A`;
-  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
-  msg += `🧾 *Order No:* ${orderNo}%0A`;
-  msg += `👤 *Customer:* ${custText}%0A`;
-  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
-  msg += `*📦 Items:*%0A${itemLines}`;
-  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
-  msg += `💰 *${grandTotal}*%0A`;
-  msg += `💳 UPI: 9843048820-1@okbizaxis%0A`;
-  msg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
-  msg += `🙏 Thank you!`;
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+  const plainMsg = `Hi, I have ordered from your website and I am attaching the invoice here. May I know the packing and dispatching details?`;
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(plainMsg)}`, '_blank');
 }
 
 function toggleLoginPopup() {

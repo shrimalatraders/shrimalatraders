@@ -635,13 +635,27 @@ body.admin-mode .admin-edit { display: flex; }
 /* ── PAYMENT SCREENSHOT MODAL ── */
 #paymentOverlay {
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 400;
-  align-items: center; justify-content: center; padding: 16px;
+  align-items: flex-end; justify-content: center;
 }
 #paymentOverlay.open { display: flex; }
 #paymentModal {
-  background: var(--white); border-radius: 16px; width: 440px; max-width: 98vw;
-  max-height: 90vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.25);
-  padding: 28px;
+  background: var(--white); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px;
+  max-height: 92vh; display: flex; flex-direction: column;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.25);
+}
+#paymentModalBody {
+  overflow-y: auto; flex: 1;
+  padding: 20px 20px 0 20px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+#paymentModalFooter {
+  padding: 12px 20px 24px;
+  border-top: 1.5px solid #f0e8d8;
+  background: white;
+  border-radius: 0 0 0 0;
+  flex-shrink: 0;
 }
 #paymentModal h3 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--dark); margin-bottom: 6px; }
 .payment-upi-box {
@@ -657,9 +671,14 @@ body.admin-mode .admin-edit { display: flex; }
 .payment-amount-box .amt-label { font-size: 12px; color: var(--muted); }
 .payment-amount-box .amt-value { font-size: 22px; font-weight: 700; color: var(--dark); }
 .screenshot-upload-area {
-  border: 2px solid var(--gold); border-radius: 10px; padding: 0;
+  display: block;
+  border: 2.5px solid var(--gold); border-radius: 12px; padding: 0;
   text-align: center; cursor: pointer; margin-bottom: 14px; transition: all 0.2s;
   background: #fdf6e9; overflow: hidden; position: relative;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 .screenshot-upload-area:active { opacity: 0.85; }
 .screenshot-upload-area input[type=file] { display: none; }
@@ -1161,6 +1180,7 @@ body.admin-mode .admin-edit { display: flex; }
 <!-- Payment Screenshot Modal -->
 <div id="paymentOverlay">
   <div id="paymentModal">
+    <div id="paymentModalBody">
     <h3 id="pm-title">💳 Payment & Order Confirmation</h3>
     <p id="pm-sub" style="font-size:13px;color:var(--muted);margin-bottom:12px;">Pay to the UPI ID below, then upload your payment screenshot.</p>
     
@@ -1185,8 +1205,8 @@ body.admin-mode .admin-edit { display: flex; }
       </ol>
     </div>
 
-    <label for="screenshotInput" class="screenshot-upload-area" id="uploadLabel">
-      <input type="file" id="screenshotInput" accept="image/*" onchange="previewScreenshot(this)">
+    <input type="file" id="screenshotInput" accept="image/*" onchange="previewScreenshot(this)" style="display:none;">
+    <div class="screenshot-upload-area" id="uploadLabel" onclick="document.getElementById('screenshotInput').click()">
       <div class="upload-inner" id="uploadInner">
         <div class="upload-icon">📸</div>
         <div class="upload-main-text" id="pm-upload-text">Tap to Upload Payment Screenshot</div>
@@ -1200,7 +1220,7 @@ body.admin-mode .admin-edit { display: flex; }
           <div class="change-text">Tap to change photo</div>
         </div>
       </div>
-    </label>
+    </div>
     <img id="screenshotPreview" alt="Payment screenshot preview">
 
     <!-- Customer Personal Details -->
@@ -1215,13 +1235,14 @@ body.admin-mode .admin-edit { display: flex; }
         <textarea id="cd_address" class="full" rows="3" placeholder="Full Address (Door No, Street, Area, City) *"></textarea>
       </div>
     </div>
-    
+    </div><!-- end paymentModalBody -->
 
-
-    <button class="confirm-order-btn btn-locked" id="confirmOrderBtn" onclick="confirmOrder()" disabled>
-      ✅ Confirm Order
-    </button>
-    <button class="payment-cancel-btn" id="pm-cancel-btn" onclick="closePayment()">Cancel</button>
+    <div id="paymentModalFooter">
+      <button class="confirm-order-btn btn-locked" id="confirmOrderBtn" onclick="confirmOrder()" disabled>
+        ✅ Confirm Order
+      </button>
+      <button class="payment-cancel-btn" id="pm-cancel-btn" onclick="closePayment()">Cancel</button>
+    </div>
   </div>
 </div>
 

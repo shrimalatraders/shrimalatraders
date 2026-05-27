@@ -2114,7 +2114,15 @@ function previewScreenshot(input) {
 }
 
 async function confirmOrder() {
-  if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot first');
+  // Re-check screenshotDataUrl from preview image as fallback
+  if (!screenshotDataUrl) {
+    const preview = document.getElementById('screenshotPreview');
+    if (preview && preview.src && preview.src.startsWith('data:')) {
+      screenshotDataUrl = preview.src;
+    }
+  }
+
+  if (!screenshotDataUrl) return showToast('⚠️ முதலில் payment screenshot upload பண்ணுங்க!');
 
   // Validate customer details
   const cdName = document.getElementById('cd_name').value.trim();
@@ -2123,30 +2131,50 @@ async function confirmOrder() {
   const cdPincode = document.getElementById('cd_pincode').value.trim();
   const cdAltPhone = document.getElementById('cd_altphone').value.trim();
 
-  if (!cdName) return showToast('⚠ Please enter your full name');
-  if (!cdPhone || cdPhone.length < 10) return showToast('⚠ Please enter a valid phone number');
-  if (!cdAddress) return showToast('⚠ Please enter your full address');
-  if (!cdPincode) return showToast('⚠ Please enter your pincode');
+  if (!cdName) return showToast('⚠️ உங்கள் பெயர் enter பண்ணுங்க');
+  if (!cdPhone || cdPhone.length < 10) return showToast('⚠️ சரியான phone number enter பண்ணுங்க');
+  if (!cdAddress) return showToast('⚠️ உங்கள் address enter பண்ணுங்க');
+  if (!cdPincode) return showToast('⚠️ Pincode enter பண்ணுங்க');
+
+  // Disable button to prevent double submit
+  const confirmBtn = document.getElementById('confirmOrderBtn');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = '⏳ Placing Order...';
+  confirmBtn.style.background = '#f59e0b';
+
 
   const total = cart.reduce((s, i) => s + (i.salePrice * i.qty), 0);
   const orderNo = 'SMT-' + Date.now().toString().slice(-6);
   const customerDetails = { name: cdName, phone: cdPhone, altPhone: cdAltPhone, address: cdAddress, pincode: cdPincode };
 
-  // Save order to localStorage (admin panel will read this)
-  const orders = JSON.parse(localStorage.getItem('smt_orders') || '[]');
+  // Save order to localStorage — store screenshot separately to avoid quota issues
+  try {
+    const orders = JSON.parse(localStorage.getItem('smt_orders') || '[]');
+    const guestEmail = currentUser ? currentUser.email : (document.getElementById('cd_email')?.value?.trim() || 'guest@order.com');
+    const guestName = currentUser ? currentUser.name : cdName;
+    const orderData = {
+      orderNo,
+      placedAt: new Date().toISOString(),
+      userEmail: guestEmail,
+      userName: guestName,
+      customerDetails,
+      items: [...cart],
+      total,
+      paymentScreenshot: screenshotDataUrl // include screenshot
+    };
+    orders.unshift(orderData);
+    // Try saving with screenshot first
+    try {
+      localStorage.setItem('smt_orders', JSON.stringify(orders));
+    } catch(quotaErr) {
+      // If quota exceeded, save without screenshot
+      orders[0].paymentScreenshot = '[screenshot too large to store]';
+      localStorage.setItem('smt_orders', JSON.stringify(orders));
+    }
+  } catch(e) { /* localStorage not available */ }
+
   const guestEmail = currentUser ? currentUser.email : (document.getElementById('cd_email')?.value?.trim() || 'guest@order.com');
   const guestName = currentUser ? currentUser.name : cdName;
-  orders.unshift({
-    orderNo,
-    placedAt: new Date().toISOString(),
-    userEmail: guestEmail,
-    userName: guestName,
-    customerDetails,
-    items: [...cart],
-    total,
-    paymentScreenshot: screenshotDataUrl
-  });
-  localStorage.setItem('smt_orders', JSON.stringify(orders));
 
   // Save order to DB (try; won't fail if server not available)
   try {

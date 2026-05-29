@@ -1647,10 +1647,10 @@ window.onload = async () => {
   // Load cart for current user (if already logged in from previous session)
   loadCart();
   try {
-    // GitHub Pages static hosting — read directly from '/shrimalatraders/shri_mala_db.json'
+    // GitHub Pages static hosting — read directly from shri_mala_db.json
     // Works for: username.github.io/reponame/ or any subfolder
     const base = window.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '');
-    const jsonUrl = base ? base + '/'/shrimalatraders/shri_mala_db.json'' : '/'/shrimalatraders/shri_mala_db.json'';
+    const jsonUrl = base ? base + '/shri_mala_db.json' : '/shri_mala_db.json';
     const res = await fetch(jsonUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + jsonUrl);
     const data = await res.json();
@@ -1688,10 +1688,10 @@ window.onload = async () => {
       <div class="empty-state">
         <h3>⚠ Products could not load</h3>
         <p style="margin-top:8px;font-size:13px;color:#c0392b">
-          Make sure <strong>'/shrimalatraders/shri_mala_db.json'</strong> is in the same folder as index.html in your GitHub repo.<br><br>
+          Make sure <strong>shri_mala_db.json</strong> is in the same folder as index.html in your GitHub repo.<br><br>
           Path tried: <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px">${(() => {
             const b = window.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '');
-            return (b ? b : '') + '/'/shrimalatraders/shri_mala_db.json'';
+            return (b ? b : '') + '/shri_mala_db.json';
           })()}</code>
         </p>
       </div>`;
@@ -2879,7 +2879,7 @@ function copyProductJson() {
 }
 
 function exportAllDescriptions() {
-  // Export full JSON (descriptions + MOQ updated) — paste into GitHub '/shrimalatraders/shri_mala_db.json'
+  // Export full JSON (descriptions + MOQ updated) — paste into GitHub shri_mala_db.json
   const data = JSON.parse(localStorage.getItem('smt_orders') ? '{}' : '{}');
   // Get current full DB structure
   const fullData = {
@@ -2891,7 +2891,7 @@ function exportAllDescriptions() {
   };
   const jsonStr = JSON.stringify(fullData, null, 2);
   navigator.clipboard.writeText(jsonStr).then(() => {
-    showToast('📋 Full JSON copied! GitHub-ல் '/shrimalatraders/shri_mala_db.json'-ல் paste பண்ணுங்க.');
+    showToast('📋 Full JSON copied! GitHub-ல் shri_mala_db.json-ல் paste பண்ணுங்க.');
   }).catch(() => {
     // Fallback: open in new window
     const win = window.open('', '_blank');

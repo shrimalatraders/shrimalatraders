@@ -1649,7 +1649,7 @@ window.onload = async () => {
   try {
     // GitHub Pages static hosting — read directly from shri_mala_db.json
     // Works for: username.github.io/reponame/ or any subfolder
-    const base = window.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '');
+    const base = '/shrimalatraders';
     const jsonUrl = base ? base + '/shri_mala_db.json' : '/shri_mala_db.json';
     const res = await fetch(jsonUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + jsonUrl);

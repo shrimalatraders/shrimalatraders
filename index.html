@@ -12,6 +12,15 @@
   gtag('js', new Date());
   gtag('config', 'G-XGLP3BWD96');
 </script>
+<!-- html2canvas — invoice image download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- EmailJS — admin order notification -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  // ⚠️ EmailJS Setup: https://www.emailjs.com தான் போய் free account create பண்ணி
+  // YOUR_PUBLIC_KEY, YOUR_SERVICE_ID, YOUR_TEMPLATE_ID replace பண்ணுங்க
+  (function(){ emailjs.init({ publicKey: 'YOUR_PUBLIC_KEY' }); })();
+</script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -929,10 +938,12 @@ body.admin-mode .admin-edit { display: flex; }
     <!-- Login popup -->
     <div id="loginPopup">
       <div class="popup-title">🔐 SIGN IN</div>
-      <input type="email" id="emailInput" placeholder="Email">
-      <input type="text" id="nameInput" placeholder="Name">
-      <input type="password" id="passwordInput" placeholder="Password (Admin only)">
-      <button class="popup-login-btn" onclick="handleLogin()">Login</button>
+      <input type="email" id="emailInput" placeholder="Your Email" oninput="checkAdminEmail(this.value)">
+      <input type="text" id="nameInput" placeholder="Your Name">
+      <div id="passwordWrap" style="display:none;">
+        <input type="password" id="passwordInput" placeholder="Password" style="width:100%;">
+      </div>
+      <button class="popup-login-btn" onclick="handleLogin()">Login →</button>
     </div>
   </div>
 </div>
@@ -2092,8 +2103,11 @@ async function confirmOrder() {
   waMsg += `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501%0A`;
   waMsg += `🙏 Thank you!`;
 
-  // Generate invoice and show overlay with confirmation alert
-  generateInvoice(total, orderNo, customerDetails, screenshotDataUrl);
+  // ✅ FIX: Snapshot cart BEFORE clearing — generateInvoice needs items
+  const cartSnapshot = [...cart];
+
+  // Generate invoice with snapshot (cart still full here)
+  generateInvoice(total, orderNo, customerDetails, screenshotDataUrl, cartSnapshot);
 
   // Show the order-confirm alert banner inside the invoice overlay
   document.getElementById('invoiceConfirmAlert').classList.add('show');
@@ -2101,24 +2115,28 @@ async function confirmOrder() {
   // Auto download invoice after short delay
   setTimeout(() => { downloadInvoice(); }, 400);
 
+  // Send admin email notification via EmailJS (no backend needed)
+  sendAdminEmailNotification({ orderNo, userName: guestName, userEmail: guestEmail, customerDetails, items: cartSnapshot, total });
+
   // DO NOT auto-open WhatsApp — customer must click the button in invoice overlay
 
   // Clear customer details form
   ['cd_name','cd_phone','cd_altphone','cd_pincode','cd_address','cd_email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
 
   cart = []; saveCart(); updateCartCount(); updateCartUI();
-  // Toast removed — invoice overlay with confirm banner is sufficient
   screenshotDataUrl = null;
 }
 
 // ─── INVOICE GENERATION ──────────────────────────────
-function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl) {
+function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl, cartItems) {
   const shotUrl = paymentScreenshotUrl || screenshotDataUrl || null;
   orderNo = orderNo || ('SMT-' + Date.now().toString().slice(-6));
   const now = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
   const cd = customerDetails || {};
+  // ✅ FIX: use passed cartItems if available, else fall back to global cart
+  const items = cartItems || cart;
 
-  const itemsHTML = cart.map((item, i) => `
+  const itemsHTML = items.map((item, i) => `
     <tr>
       <td>${i + 1}</td>
       <td><img src="${item.image || '/placeholder.jpg'}" onerror="this.src='/placeholder.jpg'" alt="${item.name}"> ${item.name}</td>
@@ -2193,11 +2211,33 @@ function closeInvoice() {
 }
 
 function downloadInvoice() {
+  // ✅ Invoice را image ஆக download பண்ணுது (html2canvas use பண்ணி)
+  const content = document.getElementById('invoiceContent');
+  if (typeof html2canvas !== 'undefined') {
+    const orderNo = document.querySelector('#invoiceContent .inv-no strong')?.textContent || 'Invoice';
+    showToast('📥 Preparing invoice image...');
+    html2canvas(content, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `${orderNo}-Invoice.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('✅ Invoice image downloaded!');
+    }).catch(() => {
+      // Fallback: print window
+      _printInvoiceFallback();
+    });
+  } else {
+    _printInvoiceFallback();
+  }
+}
+
+function _printInvoiceFallback() {
   const content = document.getElementById('invoiceContent').innerHTML;
   const styles = Array.from(document.styleSheets).map(s => {
     try { return Array.from(s.cssRules).map(r => r.cssText).join('\n'); } catch(e) { return ''; }
   }).join('\n');
   const win = window.open('', '_blank');
+  if (!win) { showToast('⚠ Popup blocked! Allow popups and try again'); return; }
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>Invoice</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -2280,20 +2320,26 @@ document.addEventListener('click', function(e) {
 });
 
 // ─── AUTH ─────────────────────────────────────────────
+const ADMIN_EMAIL = 'shrimalatraders@gmail.com'; // ← உங்க admin email இங்க வையுங்க
+const ADMIN_PASSWORD = 'Shrimala@2025';
+
+function checkAdminEmail(emailVal) {
+  const isAdminMail = emailVal.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  document.getElementById('passwordWrap').style.display = isAdminMail ? 'block' : 'none';
+}
+
 async function handleLogin() {
   const email = document.getElementById('emailInput').value.trim();
   const name = document.getElementById('nameInput').value.trim();
   const password = document.getElementById('passwordInput').value;
   if (!email) return showToast('⚠ Please enter your email');
   if (!name) return showToast('⚠ Please enter your name');
-  // Static site login — no server needed
-  const ADMIN_EMAIL = 'admin@shrimalatraders.com';
-  const ADMIN_PASSWORD = 'Shrimala@2025'; // Change this to your preferred password
-  const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL;
+  const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   if (isAdminEmail) {
-    if (!password) return showToast('⚠ Admin-க்கு password கொடுங்கள்');
+    if (!password) return showToast('⚠ Admin password கொடுங்க');
     if (password !== ADMIN_PASSWORD) return showToast('❌ Wrong admin password!');
   }
+  // Users: no password needed — email alone is enough
   currentUser = { email, name, isAdmin: isAdminEmail };
   localStorage.setItem('smt_user', JSON.stringify(currentUser));
   loadCart();
@@ -2457,7 +2503,37 @@ async function deleteProduct(id) {
   showToast('🗑 Product deleted');
 }
 
-// ─── ADMIN ORDERS ────────────────────────────────────
+// ─── ADMIN EMAIL NOTIFICATION ─────────────────────────
+// EmailJS மூலம் admin-க்கு order notification mail அனுப்புது
+// Setup: https://www.emailjs.com → free account → Email Service → Template create பண்ணுங்க
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';   // ← replace
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // ← replace
+
+function sendAdminEmailNotification({ orderNo, userName, userEmail, customerDetails, items, total }) {
+  try {
+    const cd = customerDetails || {};
+    const itemLines = (items || []).map(i => `• ${i.name} × ${i.qty} = ₹${i.salePrice * i.qty}`).join('\n');
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_name:     'Admin',
+      order_no:    orderNo,
+      cust_name:   userName || cd.name || '—',
+      cust_email:  userEmail || '—',
+      cust_phone:  cd.phone || '—',
+      cust_addr:   `${cd.address || '—'}, ${cd.pincode || ''}`,
+      items_list:  itemLines,
+      grand_total: `₹${total}`,
+      placed_at:   new Date().toLocaleString('en-IN'),
+    }).then(() => {
+      console.log('✅ Admin notification sent');
+    }).catch(err => {
+      console.warn('EmailJS not configured yet:', err);
+    });
+  } catch(e) {
+    console.warn('EmailJS error:', e);
+  }
+}
+
+
 function loadAdminOrders() {
   const list = document.getElementById('adminOrdersList');
   const orders = JSON.parse(localStorage.getItem('smt_orders') || '[]');
@@ -2500,19 +2576,20 @@ function renderAdminOrders(list, orders) {
             <img src="${order.paymentScreenshot}" alt="Payment screenshot">
           </details>` : ''}
         <button class="order-invoice-btn" onclick='viewOrderInvoice(${JSON.stringify(order)})'>🧾 View Invoice</button>
+        <button class="order-invoice-btn" style="background:var(--gold);color:var(--dark);margin-left:6px;" onclick='downloadOrderInvoiceImage(${JSON.stringify(order)})'>📥 Download Invoice</button>
       </div>`;
   }).join('');
 }
 
+function downloadOrderInvoiceImage(order) {
+  // Admin-க்கு direct invoice image download
+  generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot, order.items || []);
+  setTimeout(() => downloadInvoice(), 600);
+}
+
 function viewOrderInvoice(order) {
-  // Temporarily restore cart state to generate invoice
-  const tempCart = cart;
-  cart = order.items || [];
-  const tempUser = currentUser;
-  currentUser = { email: order.userEmail, name: order.userName };
-  generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot);
-  cart = tempCart;
-  currentUser = tempUser;
+  // ✅ FIX: pass order.items directly as cartItems param — no need to mutate global cart
+  generateInvoice(order.total, order.orderNo, order.customerDetails, order.paymentScreenshot, order.items || []);
 }
 
 // ─── SAVE CART (anonymous) ────────────────────────────

@@ -781,6 +781,23 @@ body.admin-mode .admin-edit { display: flex; }
 }
 .cust-details-grid input:focus, .cust-details-grid textarea:focus { border-color: var(--gold); }
 .cust-details-grid .full { grid-column: 1 / -1; }
+.field-error {
+  border-color: var(--red) !important;
+  background: #fff5f5 !important;
+  animation: shakeField 0.4s ease;
+}
+@keyframes shakeField {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.field-error-msg {
+  font-size: 11px; color: var(--red); font-weight: 700;
+  margin-top: -6px; margin-bottom: 4px; padding-left: 4px;
+  display: flex; align-items: center; gap: 4px;
+}
 
 /* ── ADMIN ORDERS SECTION ── */
 #adminOrdersSection { padding: 0 24px 32px; }
@@ -1168,7 +1185,7 @@ body.admin-mode .admin-edit { display: flex; }
 <div id="paymentOverlay">
   <div id="paymentModal">
     <h3 id="pm-title">💳 Payment & Order Confirmation</h3>
-    <p id="pm-sub" style="font-size:13px;color:var(--muted);margin-bottom:12px;">Pay to the UPI ID below, then upload your payment screenshot.</p>
+    <p id="pm-sub" style="font-size:13px;color:var(--muted);margin-bottom:12px;">Pay via UPI below, upload screenshot, fill delivery details, then click <strong>Confirm Order</strong>.</p>
     
     <div class="payment-amount-box">
       <div class="amt-label" id="pm-amt-label">Amount to Pay</div>
@@ -1201,20 +1218,23 @@ body.admin-mode .admin-edit { display: flex; }
 
     <!-- Customer Personal Details -->
     <div class="cust-details-section" style="margin-top:14px;">
-      <h4>📋 Your Delivery Details</h4>
+      <h4>📋 Delivery Details <span style="font-size:11px;color:var(--red);font-weight:600;">* Required fields</span></h4>
       <div class="cust-details-grid">
         <input type="text" id="cd_name" placeholder="Full Name *">
-        <input type="tel" id="cd_phone" placeholder="Phone Number *">
-        <input type="tel" id="cd_altphone" placeholder="Alternate Phone (optional)">
+        <input type="tel" id="cd_phone" placeholder="Phone Number * (10 digits)">
+        <input type="tel" id="cd_altphone" placeholder="Alternate Phone (Optional)">
         <input type="text" id="cd_pincode" placeholder="Pincode *">
-        <input type="email" id="cd_email" placeholder="Email (optional)" class="full">
-        <textarea id="cd_address" class="full" rows="3" placeholder="Full Address (Door No, Street, Area, City) *"></textarea>
+        <input type="email" id="cd_email" placeholder="Email (Optional)" class="full">
+        <textarea id="cd_address" class="full" rows="3" placeholder="Full Address * (Door No, Street, Area, City)"></textarea>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--red);font-weight:600;line-height:1.7;">
+        ❗ Name, Phone, Address &amp; Pincode are mandatory fields
       </div>
     </div>
     
 
 
-    <button class="confirm-order-btn" id="confirmOrderBtn" disabled onclick="confirmOrder()">
+    <button class="confirm-order-btn" id="confirmOrderBtn" onclick="confirmOrder()">
       ✅ Confirm Order
     </button>
     <button class="payment-cancel-btn" id="pm-cancel-btn" onclick="closePayment()">Cancel</button>
@@ -1226,22 +1246,24 @@ body.admin-mode .admin-edit { display: flex; }
   <div id="invoiceFrame">
     <!-- ORDER CONFIRM ALERT BANNER -->
     <div id="invoiceConfirmAlert">
-      <div class="alert-title">⚠️ உங்கள் Order இன்னும் Confirm ஆகவில்லை!</div>
-      <div class="alert-sub">
-        Invoice ready! Order confirm ஆக:<br>
-        1️⃣ Invoice Download பண்ணுங்கள் &nbsp;|&nbsp; 2️⃣ கீழே உள்ள WhatsApp button-ஐ click பண்ணுங்கள் &nbsp;|&nbsp; 3️⃣ WhatsApp-ல் <strong>SEND</strong> பண்ணுங்கள்
+      <div class="alert-title">🎉 Order Placed! Just 2 more steps!</div>
+      <div class="alert-sub" style="line-height:2;">
+        <strong>Step 1 →</strong> ⬇️ Download your Invoice<br>
+        <strong>Step 2 →</strong> 📸 Send Payment Screenshot + 🧾 Invoice on WhatsApp<br>
+        <span style="font-size:12px;opacity:0.85;">👇 Click the green button below, then press <strong>SEND</strong> on WhatsApp</span>
       </div>
       <span class="alert-arrow">👇</span>
     </div>
     <div class="invoice-actions">
-      <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Download</button>
+      <button id="inv-download-btn" class="inv-download" onclick="downloadInvoice()">⬇ Invoice</button>
       <button style="flex:1;background:#25D366;color:white;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;padding:9px 10px;font-family:'DM Sans',sans-serif;" onclick="sendInvoiceWhatsApp()">
-        ✅ Order Confirm — WhatsApp
+        📲 WhatsApp-ல் அனுப்பு
       </button>
       <button id="inv-close-btn" class="inv-close-btn" onclick="closeInvoice()">✕</button>
     </div>
-    <div style="background:#fdecea;padding:8px 16px;text-align:center;font-size:12px;color:#c0392b;font-weight:700;">
-      ⚠️ WhatsApp திறந்தவுடன் Send button கட்டாயம் press பண்ணவும்!
+    <div style="background:#fff3cd;padding:10px 16px;text-align:center;font-size:12px;color:#7d5a00;font-weight:700;line-height:1.8;border-bottom:1px solid #f0c040;">
+      📌 <strong>Important:</strong> Attach your <strong>Payment Screenshot</strong> in the WhatsApp message before sending!<br>
+      Order will not be confirmed without the screenshot. 🙏
     </div>
     <div id="invoiceContent"></div>
   </div>
@@ -1376,14 +1398,14 @@ body.admin-mode .admin-edit { display: flex; }
 <div id="toast"></div>
 
 <!-- Exit Confirm Modal -->
-<div id="exitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#1a1209;border:2px solid #c8962a;border-radius:18px;padding:28px 24px;width:280px;max-width:88vw;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.5);">
-    <div style="font-size:36px;margin-bottom:10px;">👋</div>
-    <div style="font-family:'Playfair Display',serif;font-size:18px;color:#f0d080;font-weight:700;margin-bottom:8px;">வெளியே போகணுமா?</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:22px;line-height:1.5;">Shri Mala Traders-ஐ விட்டு வெளியே போகிறீர்களா?</div>
+<div id="exitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1209;border:2px solid #c8962a;border-radius:18px;padding:28px 24px;width:290px;max-width:88vw;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+    <div style="font-size:38px;margin-bottom:10px;">👋</div>
+    <div style="font-family:'Playfair Display',serif;font-size:19px;color:#f0d080;font-weight:700;margin-bottom:8px;">Leave this page?</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:22px;line-height:1.6;">You are leaving Shri Mala Traders.<br>Are you sure?</div>
     <div style="display:flex;gap:12px;">
-      <button onclick="closeExitConfirm()" style="flex:1;padding:12px;background:transparent;border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
-      <button onclick="confirmExit()" style="flex:1;padding:12px;background:#c8962a;border:none;border-radius:10px;color:#1a1209;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;">வெளியே போ</button>
+      <button onclick="closeExitConfirm()" style="flex:1;padding:13px;background:transparent;border:1.5px solid rgba(255,255,255,0.35);border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Stay</button>
+      <button onclick="confirmExit()" style="flex:1;padding:13px;background:#c8962a;border:none;border-radius:10px;color:#1a1209;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;">Leave</button>
     </div>
   </div>
 </div>
@@ -1996,7 +2018,7 @@ async function processCheckout() {
   document.getElementById('paymentTotal').textContent = total;
   document.getElementById('paymentOverlay').classList.add('open');
   document.getElementById('screenshotPreview').style.display = 'none';
-  document.getElementById('confirmOrderBtn').disabled = true;
+  document.getElementById('confirmOrderBtn').disabled = false;
   document.getElementById('screenshotInput').value = '';
   history.pushState({ modal: 'payment' }, '');
 }
@@ -2026,23 +2048,63 @@ function previewScreenshot(input) {
     document.getElementById('confirmOrderBtn').disabled = false;
     showToast(t('screenshotReady'));
   };
+  reader.onerror = () => {
+    // Mobile-ல FileReader fail ஆனா — screenshot இல்லாம proceed allow பண்ணு
+    screenshotDataUrl = null;
+    document.getElementById('confirmOrderBtn').disabled = false;
+    showToast('⚠ Screenshot upload failed. Order will be placed without it.');
+  };
   reader.readAsDataURL(input.files[0]);
 }
 
-async function confirmOrder() {
-  if (!screenshotDataUrl) return showToast('⚠ Please upload payment screenshot');
+function markFieldError(fieldId, msgId, msg) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  el.classList.add('field-error');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(function() { el.focus(); }, 300);
+  let msgEl = document.getElementById(msgId);
+  if (!msgEl) {
+    msgEl = document.createElement('div');
+    msgEl.id = msgId;
+    msgEl.className = 'field-error-msg';
+    el.parentNode.insertBefore(msgEl, el.nextSibling);
+  }
+  msgEl.innerHTML = '⚠️ ' + msg;
+  msgEl.style.display = 'flex';
+  // Auto-dismiss after 2 seconds
+  var autoHide = setTimeout(function() {
+    el.classList.remove('field-error');
+    msgEl.style.display = 'none';
+  }, 2000);
+  el.addEventListener('input', function clear() {
+    clearTimeout(autoHide);
+    el.classList.remove('field-error');
+    msgEl.style.display = 'none';
+  }, { once: true });
+}
 
-  // Validate customer details
+function clearAllFieldErrors() {
+  ['cd_name','cd_phone','cd_address','cd_pincode'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('field-error');
+  });
+  document.querySelectorAll('.field-error-msg').forEach(function(m) { m.style.display = 'none'; });
+}
+
+async function confirmOrder() {
+  clearAllFieldErrors();
+
   const cdName = document.getElementById('cd_name').value.trim();
   const cdPhone = document.getElementById('cd_phone').value.trim();
   const cdAddress = document.getElementById('cd_address').value.trim();
   const cdPincode = document.getElementById('cd_pincode').value.trim();
   const cdAltPhone = document.getElementById('cd_altphone').value.trim();
 
-  if (!cdName) return showToast('⚠ Please enter your full name');
-  if (!cdPhone || cdPhone.length < 10) return showToast('⚠ Please enter a valid phone number');
-  if (!cdAddress) return showToast('⚠ Please enter your full address');
-  if (!cdPincode) return showToast('⚠ Please enter your pincode');
+  if (!cdName) { markFieldError('cd_name','err_name','Full Name is required'); return; }
+  if (!cdPhone || cdPhone.length < 10) { markFieldError('cd_phone','err_phone','Enter a valid Phone Number (10 digits)'); return; }
+  if (!cdAddress) { markFieldError('cd_address','err_addr','Full Address is required (Door No, Street, City)'); return; }
+  if (!cdPincode) { markFieldError('cd_pincode','err_pin','Pincode is required'); return; }
 
   const total = cart.reduce((s, i) => s + (i.salePrice * i.qty), 0);
   const orderNo = 'SMT-' + Date.now().toString().slice(-6);
@@ -3192,7 +3254,13 @@ function closeExitConfirm() {
 }
 function confirmExit() {
   document.getElementById('exitModal').style.display = 'none';
-  history.go(-2);
+  // history.go(-2) doesn't reliably leave — force navigate away
+  try {
+    window.history.go(-(window.history.length));
+  } catch(e) {}
+  setTimeout(function() {
+    window.location.href = 'about:blank';
+  }, 100);
 }
 </script>
 </body>

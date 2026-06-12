@@ -2174,8 +2174,7 @@ async function confirmOrder() {
   // Show the order-confirm alert banner inside the invoice overlay
   document.getElementById('invoiceConfirmAlert').classList.add('show');
 
-  // Auto download invoice after short delay
-  setTimeout(() => { downloadInvoice(); }, 400);
+  // Auto download removed — user must click Download button manually for proper PDF
 
   // Send admin email notification via EmailJS (no backend needed)
   sendAdminEmailNotification({ orderNo, userName: guestName, userEmail: guestEmail, customerDetails, items: cartSnapshot, total });
@@ -2255,8 +2254,14 @@ function generateInvoice(total, orderNo, customerDetails, paymentScreenshotUrl, 
         <p style="font-size:11px;color:#555;margin-top:8px;">Customer payment proof</p>
       </div>
     </div>` : `
-    <div style="margin-top:22px;border:2px dashed #dcc89a;border-radius:12px;padding:14px;text-align:center;background:#fdf8f0;">
-      <p style="font-size:13px;color:#8a7055;">No payment screenshot</p>
+    <div style="margin-top:22px;border:3px solid #25D366;border-radius:12px;padding:16px 18px;background:#e8fdf0;text-align:center;">
+      <div style="font-size:22px;margin-bottom:6px;">📲</div>
+      <div style="font-size:15px;font-weight:800;color:#1a7a3f;margin-bottom:4px;">Payment Screenshot அனுப்பவில்லை!</div>
+      <div style="font-size:13px;color:#2d6a4f;line-height:1.7;">
+        உங்கள் order confirm ஆக,<br>
+        <strong>Payment Screenshot-ஐ WhatsApp-ல் attach பண்ணி அனுப்பவும்.</strong><br>
+        <span style="font-size:12px;opacity:0.85;">📱 கீழே உள்ள "WhatsApp-ல் அனுப்பு" button-ஐ click பண்ணி screenshot attach பண்ணவும்.</span>
+      </div>
     </div>`}
     <div class="inv-footer">
       Shri Mala Traders, Madurai | Thank you for your order! 🙏<br>

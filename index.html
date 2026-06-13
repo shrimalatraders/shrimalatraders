@@ -1216,11 +1216,11 @@ body.admin-mode .admin-edit { display: flex; }
     </div>
     <img id="screenshotPreview" alt="Payment screenshot preview">
 
-    <!-- WhatsApp screenshot reminder — shown after upload -->
+    <!-- WhatsApp reminder — screenshot upload ஆனவுடன் show ஆகும் -->
     <div id="waScreenshotReminder" style="display:none;margin:10px 0 4px;background:#dcf8c6;border:2px solid #25D366;border-radius:10px;padding:12px 14px;text-align:center;">
       <div style="font-size:22px;margin-bottom:4px;">📲</div>
-      <div style="font-weight:800;font-size:14px;color:#075e54;margin-bottom:4px;">Screenshot-ஐ WhatsApp-லயும் அனுப்புங்கள்!</div>
-      <a href="https://wa.me/919843048820" target="_blank" style="display:inline-block;margin-top:4px;background:#25D366;color:white;font-weight:700;font-size:13px;padding:8px 18px;border-radius:8px;text-decoration:none;">📩 WhatsApp-ல் அனுப்பு</a>
+      <div style="font-weight:800;font-size:14px;color:#075e54;margin-bottom:6px;">Screenshot-ஐ WhatsApp-லயும் அனுப்புங்கள்!</div>
+      <a href="https://wa.me/919843048820" target="_blank" style="display:inline-block;background:#25D366;color:white;font-weight:700;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none;">📩 WhatsApp-ல் அனுப்பு</a>
       <div style="font-size:11px;color:#555;margin-top:6px;">Order confirmation faster ஆகும் 🙏</div>
     </div>
 
@@ -2288,7 +2288,7 @@ function closeInvoice() {
 }
 
 function downloadInvoice() {
-  // Print window திற — browser "Save as PDF" option-ல full page PDF கிடைக்கும்
+  // Print window திற — "Save as PDF" select பண்ணா full A4 PDF, எந்த crop-உம் இல்ல
   const content = document.getElementById('invoiceContent').innerHTML;
   const styles = Array.from(document.styleSheets).map(s => {
     try { return Array.from(s.cssRules).map(r => r.cssText).join('\n'); } catch(e) { return ''; }
@@ -2296,7 +2296,7 @@ function downloadInvoice() {
   const win = window.open('', '_blank');
   if (!win) { showToast('⚠ Popup blocked! Allow popups and try again'); return; }
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>Invoice</title>
+    <title>Invoice – Shri Mala Traders</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
       ${styles}
@@ -2310,13 +2310,10 @@ function downloadInvoice() {
     </style>
     </head><body>
     <div id="invoiceContent">${content}</div>
-    <script>
-      // Wait for fonts then print
-      document.fonts.ready.then(() => { window.print(); });
-    <\/script>
+    <script>document.fonts.ready.then(() => { window.print(); });<\/script>
     </body></html>`);
   win.document.close();
-  showToast('📄 Print window திறந்தது — "Save as PDF" select பண்ணுங்க');
+  showToast('📄 Print window திறந்தது — Save as PDF select பண்ணுங்க');
 }
 
 function sendInvoiceWhatsApp() {
@@ -2742,7 +2739,7 @@ window.addEventListener('popstate', function(e) {
   }
 
   // Nothing open — show custom exit confirm modal
-  // Re-push only if modal is NOT already visible (prevent multiple presses needed)
+  // Loop prevent: already visible-ஆ இருந்தா re-push வேண்டாம்
   if (document.getElementById('exitModal').style.display !== 'flex') {
     history.pushState({ modal: 'home' }, '');
     showExitConfirm();
@@ -3264,12 +3261,11 @@ function closeExitConfirm() {
 }
 function confirmExit() {
   document.getElementById('exitModal').style.display = 'none';
-  // GitHub Pages-ல about:blank போகாம — referrer இருந்தா back போ, இல்லன்னா close
+  // referrer இருந்தா அங்க போ, இல்லன்னா tab close பண்ணு
   if (document.referrer && document.referrer !== window.location.href) {
     window.location.href = document.referrer;
   } else {
-    window.close(); // Mobile browser tab மூடும்
-    // close() work ஆகல என்னா — blank page
+    window.close();
     setTimeout(() => { window.location.replace('about:blank'); }, 200);
   }
 }

@@ -1208,20 +1208,20 @@ body.admin-mode .admin-edit { display: flex; }
       </ol>
     </div>
 
-    <div class="screenshot-upload-area" onclick="document.getElementById('screenshotInput').click()">
-      <input type="file" id="screenshotInput" accept="image/*" onchange="previewScreenshot(this)">
-      <div class="upload-icon">📸</div>
-      <p id="pm-upload-text">Click here to upload Payment Screenshot</p>
-      <p id="pm-upload-sub" style="font-size:11px;margin-top:4px;">JPG / PNG accepted</p>
-    </div>
-    <img id="screenshotPreview" alt="Payment screenshot preview">
+    <!-- Hidden file input — kept for code compatibility -->
+    <input type="file" id="screenshotInput" accept="image/*" onchange="previewScreenshot(this)" style="display:none">
+    <img id="screenshotPreview" style="display:none">
 
-    <!-- WhatsApp reminder — screenshot upload ஆனவுடன் show ஆகும் -->
-    <div id="waScreenshotReminder" style="display:none;margin:10px 0 4px;background:#dcf8c6;border:2px solid #25D366;border-radius:10px;padding:12px 14px;text-align:center;">
-      <div style="font-size:22px;margin-bottom:4px;">📲</div>
-      <div style="font-weight:800;font-size:14px;color:#075e54;margin-bottom:6px;">Screenshot-ஐ WhatsApp-லயும் அனுப்புங்கள்!</div>
-      <a href="https://wa.me/919843048820" target="_blank" style="display:inline-block;background:#25D366;color:white;font-weight:700;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none;">📩 WhatsApp-ல் அனுப்பு</a>
-      <div style="font-size:11px;color:#555;margin-top:6px;">Order confirmation faster ஆகும் 🙏</div>
+    <!-- Payment Screenshot — WhatsApp-ல் அனுப்பு (always visible) -->
+    <div style="margin:10px 0 14px;background:#dcf8c6;border:2px solid #25D366;border-radius:12px;padding:14px 16px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;color:#075e54;margin-bottom:10px;">
+        📸 Payment Screenshot-ஐ WhatsApp-ல் அனுப்புங்கள்
+      </div>
+      <a href="https://wa.me/919843048820" target="_blank"
+        style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:white;font-weight:800;font-size:15px;padding:11px 28px;border-radius:10px;text-decoration:none;box-shadow:0 4px 12px rgba(37,211,102,0.35);">
+        📩 WhatsApp-ல் Screenshot அனுப்பு
+      </a>
+      <div style="font-size:11px;color:#555;margin-top:8px;">Order confirm ஆக screenshot அவசியம் 🙏</div>
     </div>
 
     <!-- Customer Personal Details -->
@@ -2025,10 +2025,7 @@ async function processCheckout() {
   // Show payment modal
   document.getElementById('paymentTotal').textContent = total;
   document.getElementById('paymentOverlay').classList.add('open');
-  document.getElementById('screenshotPreview').style.display = 'none';
   document.getElementById('confirmOrderBtn').disabled = false;
-  document.getElementById('screenshotInput').value = '';
-  document.getElementById('waScreenshotReminder').style.display = 'none';
   history.pushState({ modal: 'payment' }, '');
 }
 
